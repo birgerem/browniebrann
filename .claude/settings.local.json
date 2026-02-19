@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(cmd /c \"cd \"\"C:\\\\Edvards nettbutikk\"\" && npm install 2>&1\")",
+      "Bash(cmd /c \"npm --version 2>&1\")",
+      "Bash(powershell -Command \"npm --version\")",
+      "WebFetch(domain:brand.vipps.no)",
+      "WebFetch(domain:developer.vippsmobilepay.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:brand.vippsmobilepay.com)"
+    ]
+  }
+}

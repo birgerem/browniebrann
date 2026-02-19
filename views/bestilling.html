@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bestilling – BrownieBrann™</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">🍫 BrownieBrann™</a>
+    <div class="nav-links">
+      <a href="/">Hjem</a>
+      <a href="/meny">Meny</a>
+      <a href="/om-oss">Om Oss</a>
+      <a href="/handlekurv" class="cart-link">
+        🛒 Handlekurv
+        <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </nav>
+
+  <section class="page-header">
+    <h1>📝 Legg inn Bestilling</h1>
+    <p>Nesten der! Fyll ut skjemaet og vi setter i gang. Sjokoladen venter.</p>
+  </section>
+
+  <section class="order-section">
+    <div class="order-container">
+
+      <form class="order-form" id="order-form" novalidate>
+
+        <!-- Personalia -->
+        <div class="form-section">
+          <h2>👤 Kontaktinformasjon</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="name">Fullt Navn *</label>
+              <input type="text" id="name" name="name" placeholder="Ditt fantastiske navn" required>
+              <span class="field-error" id="err-name"></span>
+            </div>
+            <div class="form-group">
+              <label for="email">E-post *</label>
+              <input type="email" id="email" name="email" placeholder="din@epost.no" required>
+              <span class="field-error" id="err-email"></span>
+            </div>
+            <div class="form-group">
+              <label for="phone">Telefonnummer *</label>
+              <input type="tel" id="phone" name="phone" placeholder="900 00 000" required>
+              <span class="field-error" id="err-phone"></span>
+            </div>
+            <div class="form-group form-group-full">
+              <label for="address">Adresse *</label>
+              <input type="text" id="address" name="address" placeholder="Gateveien 1, 0000 Oslo" required>
+              <span class="field-error" id="err-address"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leveringsvalg -->
+        <div class="form-section">
+          <h2>🚚 Leveringsmetode</h2>
+          <div class="delivery-options">
+            <label class="delivery-option" id="delivery-local">
+              <input type="radio" name="delivery" value="local" checked>
+              <div class="delivery-content">
+                <span class="delivery-icon">🏪</span>
+                <div>
+                  <strong>Lokal Levering</strong>
+                  <p>Vi kjører til deg! 49 kr innen 5 km radius.</p>
+                </div>
+                <span class="delivery-price">49 kr</span>
+              </div>
+            </label>
+            <label class="delivery-option" id="delivery-pickup">
+              <input type="radio" name="delivery" value="pickup">
+              <div class="delivery-content">
+                <span class="delivery-icon">🏃</span>
+                <div>
+                  <strong>Hentes av deg</strong>
+                  <p>Kom og hent selv – gratis! Vi lover å si hei.</p>
+                </div>
+                <span class="delivery-price">Gratis</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Ordreliste -->
+        <div class="form-section">
+          <h2>🍫 Din Bestilling</h2>
+          <div id="order-items-preview" class="order-items-preview">
+            <p class="order-empty-msg" id="order-empty">Ingen varer i handlekurven. <a href="/meny">Gå til meny →</a></p>
+          </div>
+          <div class="order-total-row">
+            <span>Subtotal:</span>
+            <span id="order-subtotal">0 kr</span>
+          </div>
+          <div class="order-total-row">
+            <span>Frakt:</span>
+            <span id="order-shipping">49 kr</span>
+          </div>
+          <div class="order-total-row order-grand-total">
+            <span>Totalt:</span>
+            <span id="order-total">0 kr</span>
+          </div>
+        </div>
+
+        <!-- Betalingsmetode -->
+        <div class="form-section">
+          <h2>💳 Betalingsmetode</h2>
+          <div class="delivery-options">
+            <label class="delivery-option">
+              <input type="radio" name="payment" value="vipps" checked>
+              <div class="delivery-content">
+                <img src="https://media.ffycdn.net/eu/vipps/bsCfHB667aHWogtuXGqJ.png" class="vipps-logo-sm" alt="Vipps">
+                <div>
+                  <strong>Vipps</strong>
+                  <p>Vi sender deg Vipps-info på e-post etter bestilling.</p>
+                </div>
+                <span class="delivery-price vipps-color">Enkelt!</span>
+              </div>
+            </label>
+            <label class="delivery-option">
+              <input type="radio" name="payment" value="cash">
+              <div class="delivery-content">
+                <span class="delivery-icon">💵</span>
+                <div>
+                  <strong>Betal ved levering / henting</strong>
+                  <p>Kontant eller Vipps når du mottar browniene.</p>
+                </div>
+                <span class="delivery-price">OK!</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Kommentar -->
+        <div class="form-section">
+          <h2>💬 Ønsker / Kommentarer</h2>
+          <div class="form-group">
+            <label for="comment">Særønsker (valgfritt)</label>
+            <textarea id="comment" name="comment" rows="4" placeholder="F.eks. glutenfri? Allergi? Ekstra sjokolade? (Svaret på siste spørsmål er alltid ja.)"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section submit-section">
+          <div class="order-confirm-info">
+            <p>✅ Du vil motta en bekreftelse på e-post etter at bestillingen er mottatt.</p>
+            <p>⏱️ Vi bekrefter innen 1-2 timer i åpningstid.</p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-large btn-full" id="submit-btn">
+            🚀 Send Bestilling
+          </button>
+          <p class="submit-disclaimer">Ved å sende bestillingen godtar du at vi sender deg sjokolade. Det er egentlig alt. Ingen finprint.</p>
+        </div>
+
+      </form>
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">🍫 BrownieBrann™</div>
+      <p>Det tryggeste farlige navnet på en brownie-butikk.</p>
+      <div class="footer-links">
+        <a href="/">Hjem</a>
+        <a href="/meny">Meny</a>
+        <a href="/om-oss">Om Oss</a>
+        <a href="/handlekurv">Handlekurv</a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="/js/cart.js"></script>
+  <script src="/js/bestilling.js"></script>
+</body>
+</html>

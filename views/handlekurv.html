@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handlekurv – BrownieBrann™</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">🍫 BrownieBrann™</a>
+    <div class="nav-links">
+      <a href="/">Hjem</a>
+      <a href="/meny">Meny</a>
+      <a href="/om-oss">Om Oss</a>
+      <a href="/handlekurv" class="cart-link active">
+        🛒 Handlekurv
+        <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </nav>
+
+  <section class="page-header">
+    <h1>🛒 Din Handlekurv</h1>
+    <p>Her samles alle dine gode valg. Du er en klog person.</p>
+  </section>
+
+  <section class="cart-section">
+    <div class="cart-container">
+
+      <div class="cart-items-wrapper">
+        <div id="cart-empty" class="cart-empty" style="display:none;">
+          <div class="empty-icon">😢</div>
+          <h2>Handlekurven er tom</h2>
+          <p>Det er trist. Brownies er ikke glad for dette. Vi er ikke glad for dette. Gå til menyen og fiks dette.</p>
+          <a href="/meny" class="btn btn-primary">🍫 Gå til Meny</a>
+        </div>
+
+        <div id="cart-items-list">
+          <!-- Items injected by JS -->
+        </div>
+      </div>
+
+      <div class="cart-summary" id="cart-summary">
+        <h2>Oppsummering</h2>
+
+        <div class="summary-rows" id="summary-rows">
+          <!-- Filled by JS -->
+        </div>
+
+        <div class="summary-divider"></div>
+        <div class="summary-total">
+          <span>Frakt</span>
+          <span id="shipping-cost">49 kr</span>
+        </div>
+        <div class="summary-total summary-grand">
+          <span>Totalt</span>
+          <span id="grand-total">0 kr</span>
+        </div>
+
+        <div class="free-shipping-note" id="free-shipping-note">
+          Bestill for <strong><span id="remaining-for-free">251</span> kr</strong> til for gratis frakt! 🚚
+        </div>
+
+        <a href="/bestilling" class="btn btn-primary btn-large btn-full" id="checkout-btn">
+          📝 Gå til Bestilling
+        </a>
+
+        <a href="/meny" class="btn btn-secondary btn-full" style="margin-top:12px;">
+          ← Fortsett å handle
+        </a>
+
+        <div class="cart-fun-fact">
+          <p>💡 Visste du at brownies er 100% mer deilige enn ingen brownies?</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="upsell-section" id="upsell-section" style="display:none;">
+    <h2>Glem ikke disse! 🙈</h2>
+    <p>Fordi en brownie er bra, men tre brownies er matematisk bedre.</p>
+    <div class="upsell-grid">
+      <div class="upsell-card">
+        <span class="upsell-emoji">🍫</span>
+        <h4>Classic Brownie</h4>
+        <p>45 kr</p>
+        <button class="btn btn-add btn-small" onclick="addToCart('Classic Brownie', 45, '🍫')">+ Legg til</button>
+      </div>
+      <div class="upsell-card">
+        <span class="upsell-emoji">🍮</span>
+        <h4>Salt Karamell Chaos</h4>
+        <p>55 kr</p>
+        <button class="btn btn-add btn-small" onclick="addToCart('Salt Karamell Chaos', 55, '🍮')">+ Legg til</button>
+      </div>
+      <div class="upsell-card">
+        <span class="upsell-emoji">🍪</span>
+        <h4>Oreo Crush</h4>
+        <p>55 kr</p>
+        <button class="btn btn-add btn-small" onclick="addToCart('Oreo Crush', 55, '🍪')">+ Legg til</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">🍫 BrownieBrann™</div>
+      <p>Det tryggeste farlige navnet på en brownie-butikk.</p>
+      <div class="footer-links">
+        <a href="/">Hjem</a>
+        <a href="/meny">Meny</a>
+        <a href="/om-oss">Om Oss</a>
+        <a href="/handlekurv">Handlekurv</a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="/js/cart.js"></script>
+  <script src="/js/handlekurv.js"></script>
+</body>
+</html>

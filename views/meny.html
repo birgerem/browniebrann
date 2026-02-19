@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meny – BrownieBrann™</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">🍫 BrownieBrann™</a>
+    <div class="nav-links">
+      <a href="/">Hjem</a>
+      <a href="/meny" class="active">Meny</a>
+      <a href="/om-oss">Om Oss</a>
+      <a href="/handlekurv" class="cart-link">
+        🛒 Handlekurv
+        <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </nav>
+
+  <section class="page-header">
+    <h1>🍫 Vår Hellige Meny</h1>
+    <p>Alt er sjokolade. Noen ting er mer sjokolade. Velg klokt (eller velg alt).</p>
+  </section>
+
+  <section class="menu-section">
+    <div class="menu-filter">
+      <button class="filter-btn active" data-filter="all">Alle</button>
+      <button class="filter-btn" data-filter="classic">Klassisk</button>
+      <button class="filter-btn" data-filter="fancy">Fancy</button>
+      <button class="filter-btn" data-filter="wild">Vill & Gal</button>
+    </div>
+
+    <div class="menu-grid" id="menu-grid">
+
+      <!-- 1 -->
+      <div class="menu-card" data-category="classic">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🍫</div>
+          <div class="menu-badge">Bestselger</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Classic Brownie</h3>
+          <p class="menu-desc">Som en klem, bare sjokolade. Den som started det hele. Den originale. Den uslåelige. Mamma lager noe lignende, men vår er bedre (sorry, mamma).</p>
+          <div class="menu-tags"><span>🍫 Klassisk</span><span>❤️ Favoritt</span></div>
+          <div class="menu-footer">
+            <span class="price">45 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Classic Brownie', 45, '🍫')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="menu-card" data-category="fancy">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🍮</div>
+          <div class="menu-badge badge-gold">Toppvalg</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Salt Karamell Chaos</h3>
+          <p class="menu-desc">Årsaken til alle gode beslutninger. Salt møter søtt i det mest dramatiske kulinariske møtet siden folk oppdaget at sjokolade og melk er et team.</p>
+          <div class="menu-tags"><span>🍮 Fancy</span><span>🧂 Salt+Søtt</span></div>
+          <div class="menu-footer">
+            <span class="price">55 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Salt Karamell Chaos', 55, '🍮')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="menu-card" data-category="classic">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🍪</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Oreo Crush</h3>
+          <p class="menu-desc">Knust kjeks, ikke knuste drømmer. En hel pakke Oreo møter mørkeste sjokoladedeig i et perfekt kaos av teksturer. Det er nesten uansvarlig godt.</p>
+          <div class="menu-tags"><span>🍪 Kjeks</span><span>💥 Crunch</span></div>
+          <div class="menu-footer">
+            <span class="price">55 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Oreo Crush', 55, '🍪')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="menu-card" data-category="fancy">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🫐</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Blåbær Boom</h3>
+          <p class="menu-desc">For de som vil ha noe fruktig, men nekter å gi slipp på sjokoladen. Ferske blåbær i mørk sjokolade er ikke et kompromiss – det er oppgradering.</p>
+          <div class="menu-tags"><span>🫐 Frukt</span><span>✨ Fancy</span></div>
+          <div class="menu-footer">
+            <span class="price">60 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Blåbær Boom', 60, '🫐')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="menu-card" data-category="wild">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🌶️</div>
+          <div class="menu-badge badge-red">Hot!</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Chili Sjokk</h3>
+          <p class="menu-desc">For de som synes livet er for enkelt. En brownie med et lite spark på slutten. Ikke supersterk – bare overraskende nok til at du løfter øyenbrynet og sier "...hva?"</p>
+          <div class="menu-tags"><span>🌶️ Vill</span><span>🔥 Spicy</span></div>
+          <div class="menu-footer">
+            <span class="price">55 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Chili Sjokk', 55, '🌶️')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 -->
+      <div class="menu-card" data-category="classic">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🥜</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Peanøtt Panikk</h3>
+          <p class="menu-desc">Ingen grunn til panikk – vi lover. Denne er tvertimot beroligende. Cremet peanøttsmør smelter inn i mørk sjokolade i en kombo som gjør at du glemmer alt stress.</p>
+          <div class="menu-tags"><span>🥜 Nøtter</span><span>🧈 Kremete</span></div>
+          <div class="menu-footer">
+            <span class="price">55 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Peanøtt Panikk', 55, '🥜')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7 -->
+      <div class="menu-card" data-category="fancy">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🍓</div>
+          <div class="menu-badge badge-pink">Ny!</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Jordbær Drama</h3>
+          <p class="menu-desc">Fordi sjokolade og jordbær alltid har hatt et komplisert forhold. Vi gir dem endelig en sjanse til å fungere, og se – det funker. Det funker veldig bra faktisk.</p>
+          <div class="menu-tags"><span>🍓 Frukt</span><span>💖 Romantisk</span></div>
+          <div class="menu-footer">
+            <span class="price">60 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Jordbær Drama', 60, '🍓')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8 -->
+      <div class="menu-card" data-category="wild">
+        <div class="menu-card-img">
+          <div class="brownie-emoji-big">🌈</div>
+          <div class="menu-badge badge-rainbow">Spesiell!</div>
+        </div>
+        <div class="menu-card-body">
+          <h3>Regnbue Kaos</h3>
+          <p class="menu-desc">Alle farger, dobbelt sjokolade, og en identitetskrise i hver bit. Dette er en brownie som ikke vet hva den vil bli, men er veldig glad uansett. Respekter det.</p>
+          <div class="menu-tags"><span>🌈 Vill</span><span>🎉 Party</span></div>
+          <div class="menu-footer">
+            <span class="price">65 kr</span>
+            <button class="btn btn-add" onclick="addToCart('Regnbue Kaos', 65, '🌈')">+ Legg i kurv</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="menu-cta">
+      <p>Klart for å bestille? Handlekurven venter med åpne armer. 🛒</p>
+      <a href="/handlekurv" class="btn btn-primary btn-large">Se Handlekurv</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">🍫 BrownieBrann™</div>
+      <p>Det tryggeste farlige navnet på en brownie-butikk.</p>
+      <div class="footer-links">
+        <a href="/">Hjem</a>
+        <a href="/meny">Meny</a>
+        <a href="/om-oss">Om Oss</a>
+        <a href="/handlekurv">Handlekurv</a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/js/cart.js"></script>
+  <script>
+    // Filter functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.menu-card').forEach(card => {
+          if (filter === 'all' || card.dataset.category === filter) {
+            card.style.display = '';
+            card.style.animation = 'fadeInUp 0.3s ease';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Takk for Bestillingen! – BrownieBrann™</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">🍫 BrownieBrann™</a>
+    <div class="nav-links">
+      <a href="/">Hjem</a>
+      <a href="/meny">Meny</a>
+      <a href="/om-oss">Om Oss</a>
+      <a href="/handlekurv" class="cart-link">
+        🛒 Handlekurv
+        <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </nav>
+
+  <section class="takk-section">
+    <div class="takk-content">
+      <div class="takk-animation">
+        <div class="confetti-container" id="confetti"></div>
+        <div class="takk-icon">🎉</div>
+      </div>
+
+      <h1>Bestillingen er mottatt!</h1>
+      <p class="takk-sub">Takk for at du stolte på oss, <strong id="customer-name">venn</strong>!</p>
+
+      <div class="takk-card">
+        <h2>Hva skjer nå?</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-icon">📧</span>
+            <div>
+              <strong>Bekreftelse på e-post</strong>
+              <p>Vi sender en bekreftelse til e-posten din snart.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-icon">🍫</span>
+            <div>
+              <strong>Vi baker brownies</strong>
+              <p>Ovnene er varme. Sjokoladen smelter. Magien skjer.</p>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-icon">🚚</span>
+            <div>
+              <strong>Levering på vei!</strong>
+              <p>Browniene pakkes forsiktig og sendes din vei.</p>
+            </div>
+          </div>
+          <div class="step" id="betaling-steg">
+            <span class="step-icon" id="betaling-ikon">💳</span>
+            <div>
+              <strong id="betaling-tittel">Betaling</strong>
+              <p id="betaling-tekst">Vi sender deg betalingsinformasjon på e-post.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vipps-betalingskort – vises kun ved Vipps-valg -->
+      <div class="vipps-payment-card" id="vipps-card" style="display:none;">
+        <img src="https://media.ffycdn.net/eu/vipps/bsCfHB667aHWogtuXGqJ.png" class="vipps-logo-lg" alt="Vipps">
+        <h3>Du betaler med Vipps</h3>
+        <div class="vipps-amount" id="vipps-amount">0 kr</div>
+        <p>Vi sender deg Vipps-informasjon direkte – sjekk e-posten din! 📧</p>
+        <p class="vipps-note">Browniene er klare når vi har mottatt betalingen. 🍫</p>
+      </div>
+
+      <!-- Kontant-info – vises kun ved "betal ved levering" -->
+      <div class="cash-payment-card" id="cash-card" style="display:none;">
+        <span style="font-size:2.5rem;">💵</span>
+        <h3>Du betaler ved levering / henting</h3>
+        <p>Ha kontanter eller Vipps klart når browniene ankommer. Vi gleder oss!</p>
+      </div>
+
+      <div class="order-summary-takk" id="order-summary-takk">
+        <h3>Din bestilling:</h3>
+        <div id="takk-items"></div>
+        <div class="takk-total">
+          <span>Totalt betalt:</span>
+          <strong id="takk-total">–</strong>
+        </div>
+      </div>
+
+      <div class="takk-meme">
+        <p>"Du er nå offisielt en BrownieBrann™-kunde."</p>
+        <p style="opacity:0.6; font-size:0.85rem;">Det er ikke et sertifikat, men det burde det vært.</p>
+      </div>
+
+      <div class="takk-buttons">
+        <a href="/meny" class="btn btn-primary">🍫 Bestill Mer</a>
+        <a href="/" class="btn btn-secondary">← Tilbake til forsiden</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">🍫 BrownieBrann™</div>
+      <p>Det tryggeste farlige navnet på en brownie-butikk.</p>
+      <div class="footer-links">
+        <a href="/">Hjem</a>
+        <a href="/meny">Meny</a>
+        <a href="/om-oss">Om Oss</a>
+        <a href="/handlekurv">Handlekurv</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/cart.js"></script>
+  <script>
+    // Show order summary from localStorage
+    const lastOrder = JSON.parse(localStorage.getItem('lastOrder') || '{}');
+    if (lastOrder.name) {
+      document.getElementById('customer-name').textContent = lastOrder.name;
+    }
+
+    let totalBeløp = 0;
+    if (lastOrder.items && lastOrder.items.length > 0) {
+      const container = document.getElementById('takk-items');
+      lastOrder.items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'takk-item-row';
+        row.innerHTML = `<span>${item.emoji} ${item.name} × ${item.qty}</span><span>${item.price * item.qty} kr</span>`;
+        container.appendChild(row);
+      });
+      const shipping = lastOrder.delivery === 'pickup' ? 0 : 49;
+      const subtotal = lastOrder.items.reduce((s, i) => s + i.price * i.qty, 0);
+      totalBeløp = subtotal + shipping;
+      document.getElementById('takk-total').textContent = totalBeløp + ' kr';
+    }
+
+    // Vis betalingsinfo basert på valgt metode
+    const payment = lastOrder.payment || 'vipps';
+    if (payment === 'vipps') {
+      document.getElementById('vipps-card').style.display = '';
+      document.getElementById('vipps-amount').textContent = totalBeløp + ' kr';
+      document.getElementById('betaling-ikon').textContent = '📱';
+      document.getElementById('betaling-tittel').textContent = 'Betal med Vipps';
+      document.getElementById('betaling-tekst').textContent = 'Vi sender Vipps-info på e-post. Browniene er klare etter betaling!';
+    } else {
+      document.getElementById('cash-card').style.display = '';
+      document.getElementById('betaling-ikon').textContent = '💵';
+      document.getElementById('betaling-tittel').textContent = 'Betal ved levering / henting';
+      document.getElementById('betaling-tekst').textContent = 'Ha kontanter eller Vipps klart. Vi er fleksible!';
+    }
+
+    // Confetti effect
+    function makeConfetti() {
+      const colors = ['#4A2C2A','#FDE9A7','#CDEBFF','#F7F2E9','#e07b54','#f9c74f'];
+      const container = document.getElementById('confetti');
+      for (let i = 0; i < 60; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.cssText = `
+          left: ${Math.random()*100}%;
+          background: ${colors[Math.floor(Math.random()*colors.length)]};
+          animation-delay: ${Math.random()*2}s;
+          animation-duration: ${2 + Math.random()*2}s;
+          width: ${8 + Math.random()*8}px;
+          height: ${8 + Math.random()*8}px;
+          border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+        `;
+        container.appendChild(piece);
+      }
+    }
+    makeConfetti();
+
+    // Clear cart after successful order
+    localStorage.removeItem('brownieBrannCart');
+  </script>
+</body>
+</html>
