@@ -32,6 +32,7 @@ app.get('/handlekurv',(req, res) => res.sendFile(path.join(views, 'handlekurv.ht
 app.get('/bestilling',(req, res) => res.sendFile(path.join(views, 'bestilling.html')));
 app.get('/takk',      (req, res) => res.sendFile(path.join(views, 'takk.html')));
 app.get('/om-oss',    (req, res) => res.sendFile(path.join(views, 'om-oss.html')));
+app.get('/spill',     (req, res) => res.sendFile(path.join(views, 'spill.html')));
 
 // ---- E-post oppsett ----
 function createTransporter() {

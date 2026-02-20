@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Brownie Brann – Kast og Treff! 🎮</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* =====================================================
+       SPILL-SPESIFIKK CSS
+       ===================================================== */
+
+    /* Hindre body-scroll under spill */
+    body { overflow: hidden; }
+
+    /* Spillområde fyller resten av viewport under navbar */
+    #game-wrapper {
+      position: relative;
+      width: 100%;
+      height: calc(100dvh - 57px); /* dvh = dynamic viewport height (mobil) */
+      background: #2e1a19;
+      overflow: hidden;
+      touch-action: none; /* hindrer scroll ved touch-drag */
+    }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* --- HUD (score + timer) --- */
+    #hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #score-display, #timer-display {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+      color: #FDE9A7;
+      background: rgba(74,44,42,0.82);
+      padding: 7px 16px;
+      border-radius: 100px;
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.3px;
+    }
+
+    #timer-display.urgent { color: #ff6b6b; animation: urgentPulse 0.5s infinite alternate; }
+    @keyframes urgentPulse { from { opacity: 1; } to { opacity: 0.6; } }
+
+    /* --- Hint-tekst --- */
+    #hint-overlay {
+      position: absolute;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: clamp(0.82rem, 2.2vw, 1rem);
+      color: #F7F2E9;
+      background: rgba(74,44,42,0.85);
+      padding: 9px 20px;
+      border-radius: 100px;
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+      animation: pulse 2.5s infinite;
+    }
+
+    /* --- Treff-melding --- */
+    #hit-message {
+      position: absolute;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.3rem, 4vw, 1.8rem);
+      color: #FDE9A7;
+      text-shadow: 2px 3px 0 #4A2C2A, -1px -1px 0 #2e1a19;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+      transform: translateX(-50%);
+    }
+    #hit-message.show { opacity: 1; }
+
+    /* --- Sluttskjerm --- */
+    #end-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(46,26,25,0.9);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+    #end-screen.hidden { display: none; }
+
+    #end-card {
+      background: #F7F2E9;
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 44px) clamp(20px, 4vw, 40px);
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 8px 50px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: cardPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes cardPop {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    #end-emoji { font-size: clamp(2.5rem, 7vw, 3.5rem); }
+
+    #end-card h2 {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(1.2rem, 3.5vw, 1.7rem);
+      font-weight: 900;
+      color: #4A2C2A;
+      margin: 0;
+    }
+
+    #end-score-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-weight: 700;
+      color: #4A2C2A;
+      margin: 0;
+    }
+
+    #discount-box {
+      background: #4A2C2A;
+      border-radius: 14px;
+      padding: 16px 18px;
+      color: #F7F2E9;
+      font-family: 'Poppins', sans-serif;
+    }
+    #discount-box p { font-size: 0.88rem; margin: 0 0 10px; }
+
+    #discount-code {
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-weight: 900;
+      color: #FDE9A7;
+      letter-spacing: 1px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px dashed #FDE9A7;
+      user-select: all; /* enkel kopiering */
+    }
+
+    #try-again-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      color: #6b4f4d;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .hidden { display: none !important; }
+
+    #end-card .btn { margin-top: 4px; }
+
+    /* Responsiv: tettere på veldig smale skjermer */
+    @media (max-width: 380px) {
+      #end-card { gap: 10px; }
+      #discount-code { font-size: 1rem; letter-spacing: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================= NAVBAR ========================= -->
+  <nav class="navbar">
+    <a href="/" class="logo">🍫 BrownieBrann™</a>
+    <div class="nav-links">
+      <a href="/">Hjem</a>
+      <a href="/meny">Meny</a>
+      <a href="/spill" class="active">🎮 Spill</a>
+      <a href="/om-oss">Om Oss</a>
+      <a href="/handlekurv" class="cart-link">
+        🛒 Handlekurv
+        <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+    </div>
+    <button class="hamburger" id="hamburger">☰</button>
+  </nav>
+
+  <!-- ========================= SPILLOMRÅDE ========================= -->
+  <div id="game-wrapper">
+
+    <!-- Canvas: all spill-grafikk tegnes her -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD: score og timer (HTML overlay) -->
+    <div id="hud">
+      <div id="score-display">🍫 <span id="score-val">0</span> poeng</div>
+      <div id="timer-display">⏱ <span id="timer-val">30</span>s</div>
+    </div>
+
+    <!-- Hint-tekst (skjules etter første kast) -->
+    <div id="hint-overlay">🍫 Dra bakover fra slyngen og slipp!</div>
+
+    <!-- Flytende treff-melding -->
+    <div id="hit-message"></div>
+
+    <!-- Sluttskjerm (skjult til spillet er ferdig) -->
+    <div id="end-screen" class="hidden">
+      <div id="end-card">
+        <div id="end-emoji">🍫</div>
+        <h2 id="end-title">Runden er over!</h2>
+        <p id="end-score-text"></p>
+
+        <!-- Rabattkode (vises kun ved høy score) -->
+        <div id="discount-box" class="hidden">
+          <p>Du slukket kritikken! Få 10% rabatt:</p>
+          <div id="discount-code">BROWNIEBRANN10 🍫</div>
+        </div>
+
+        <!-- Prøv igjen (vises ved lav score) -->
+        <p id="try-again-text" class="hidden">Prøv igjen for å vinne rabatt! 🎯</p>
+
+        <button id="restart-btn" class="btn btn-primary btn-large">🔁 Spill igjen!</button>
+        <a href="/meny" class="btn btn-secondary">🛒 Bestill brownies</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/cart.js"></script>
+  <script>
+  /* ================================================================
+     BROWNIE BRANN – KAST OG TREFF!
+     Komplett spilllogikk i ren JS + Canvas 2D API
+     Ingen eksterne avhengigheter.
+     ================================================================ */
+
+  (function () {
+    'use strict';
+
+    // ============================================================
+    //  SECTION 1: KONSTANTER & KONFIG
+    // ============================================================
+
+    const CFG = {
+      GRAVITY:          0.38,   // px/frame² nedover
+      MAX_POWER:        18,     // max startfart i px/frame
+      DRAG_RADIUS:      95,     // maks drag-avstand fra slingshot (px)
+      SLINGSHOT_X_PCT:  0.13,   // slingshot X som andel av canvas-bredde
+      SLINGSHOT_Y_PCT:  0.78,   // slingshot Y som andel av canvas-høyde
+      BROWNIE_RADIUS:   13,     // brownie-radius i px
+      TRAIL_LENGTH:     6,      // antall trail-posisjoner
+      HIT_DISPLAY_MS:   950,    // ms figur viser chocolate-fjes etter treff
+      GAME_DURATION:    30,     // sekunder
+      SCORE_THRESHOLD:  500,    // grense for rabattkode
+    };
+
+    const COLORS = {
+      CHOCO:      '#4A2C2A',
+      CHOCO_D:    '#2e1a19',
+      CHOCO_L:    '#6b3f3c',
+      CREAM:      '#F7F2E9',
+      YELLOW:     '#FDE9A7',
+      ORANGE:     '#e07b54',
+    };
+
+    const HIT_TEXTS = [
+      'Treff! 🎯',
+      'Sjokoladeregn! 🍫',
+      'Pang! 💥',
+      'Rett i fjeset! 😤',
+      'Full pott! 🏆',
+      'Direkte treff! 💣',
+      'Bom! 🎊',
+    ];
+
+    // ============================================================
+    //  SECTION 2: TILSTAND (STATE)
+    // ============================================================
+
+    // phase: 'waiting' | 'aiming' | 'flying' | 'gameover'
+    const state = {
+      phase:         'waiting',
+      score:         0,
+      timeLeft:      CFG.GAME_DURATION,
+      firstThrow:    false,
+      dragCurrent:   null,   // {x, y} clamped canvas-koordinater under drag
+      brownie:       null,   // prosjektil-objekt eller null
+      trail:         [],     // array av {x,y}
+      targets:       [],     // array av mål-objekter
+      hitMessages:   [],     // canvas-flytende tekster
+      timerInterval: null,
+      rafId:         null,
+    };
+
+    // ============================================================
+    //  SECTION 3: CANVAS & RESIZE
+    // ============================================================
+
+    const canvas  = document.getElementById('game-canvas');
+    const ctx     = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const wrapper = document.getElementById('game-wrapper');
+      canvas.width  = wrapper.clientWidth;
+      canvas.height = wrapper.clientHeight;
+      // Re-plasser mål ved resize
+      if (state.phase !== 'gameover') {
+        state.targets.forEach((t, i) => {
+          const def = TARGET_DEFS[i];
+          t.y = canvas.height * def.yPct;
+        });
+      }
+    }
+
+    // ============================================================
+    //  SECTION 4: BAKGRUNN
+    // ============================================================
+
+    function drawBackground() {
+      const W = canvas.width, H = canvas.height;
+      // Varm sjokolade-gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0,   '#1e0e0d');
+      grad.addColorStop(0.5, '#3a1e1c');
+      grad.addColorStop(1,   '#4A2C2A');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtile horisontale striper (tegneserieaktig)
+      ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+      ctx.lineWidth = 1;
+      for (let y = 0; y < H; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+
+      // Gulv-linje
+      ctx.strokeStyle = 'rgba(253,233,167,0.15)';
+      ctx.lineWidth = 2;
+      const groundY = H * 0.92;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY);
+      ctx.lineTo(W, groundY);
+      ctx.stroke();
+
+      // Gress-hint under gulv
+      ctx.fillStyle = 'rgba(60,100,30,0.18)';
+      ctx.fillRect(0, groundY, W, H - groundY);
+    }
+
+    // ============================================================
+    //  SECTION 5: SLINGSHOT
+    // ============================================================
+
+    function slingshotPos() {
+      return {
+        x: Math.round(canvas.width  * CFG.SLINGSHOT_X_PCT),
+        y: Math.round(canvas.height * CFG.SLINGSHOT_Y_PCT),
+      };
+    }
+
+    function drawSlingshot(dragPos) {
+      const { x: sx, y: sy } = slingshotPos();
+      const forkL = { x: sx - 13, y: sy - 42 };
+      const forkR = { x: sx + 13, y: sy - 42 };
+
+      ctx.lineCap = 'round';
+
+      // Trestokk (stamme)
+      ctx.strokeStyle = '#5a3010';
+      ctx.lineWidth = 11;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy + 14);
+      ctx.lineTo(sx, sy - 10);
+      ctx.stroke();
+
+      // Venstre arm
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 10);
+      ctx.lineTo(forkL.x, forkL.y);
+      ctx.stroke();
+
+      // Høyre arm
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 10);
+      ctx.lineTo(forkR.x, forkR.y);
+      ctx.stroke();
+
+      // Tretre-detalj (lys stripe)
+      ctx.strokeStyle = 'rgba(200,160,80,0.3)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sx + 2, sy + 14);
+      ctx.lineTo(sx + 2, sy - 8);
+      ctx.stroke();
+
+      if (dragPos) {
+        // Gummi-strikker under aiming
+        ctx.strokeStyle = '#c8a060';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.moveTo(forkL.x, forkL.y);
+        ctx.lineTo(dragPos.x, dragPos.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(forkR.x, forkR.y);
+        ctx.lineTo(dragPos.x, dragPos.y);
+        ctx.stroke();
+
+        // Brownie i slyngen under drag
+        drawBrownie(dragPos.x, dragPos.y, 1.0);
+      } else {
+        // Hvile-strikk mellom gaffel-topper
+        ctx.strokeStyle = '#9a7840';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(forkL.x, forkL.y);
+        ctx.lineTo(forkR.x, forkR.y);
+        ctx.stroke();
+
+        // Brownie i hvile (på strikken)
+        const midX = (forkL.x + forkR.x) / 2;
+        const midY = forkL.y;
+        drawBrownie(midX, midY, 1.0);
+      }
+    }
+
+    // ============================================================
+    //  SECTION 6: BROWNIE-PROSJEKTIL
+    // ============================================================
+
+    function drawBrownie(x, y, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // Skygge
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur  = 8;
+      ctx.shadowOffsetY = 3;
+
+      // Hoved-sirkel (mørk brun)
+      ctx.beginPath();
+      ctx.arc(x, y, CFG.BROWNIE_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = '#3a1a08';
+      ctx.fill();
+
+      ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+      // Mellomton-ring
+      ctx.beginPath();
+      ctx.arc(x, y, CFG.BROWNIE_RADIUS - 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#5c2e10';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Swirl-detalj (lys)
+      ctx.strokeStyle = 'rgba(255,200,100,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x - 6, y - 3);
+      ctx.bezierCurveTo(x - 1, y - 8, x + 5, y - 5, x + 7, y + 1);
+      ctx.bezierCurveTo(x + 9, y + 5, x + 4, y + 8, x, y + 6);
+      ctx.stroke();
+
+      // Hvit glimmer-prikk
+      ctx.fillStyle = 'rgba(255,255,220,0.55)';
+      ctx.beginPath();
+      ctx.arc(x - 4, y - 4, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawTrail() {
+      state.trail.forEach((pos, i) => {
+        const alpha = ((i + 1) / state.trail.length) * 0.4;
+        const r = CFG.BROWNIE_RADIUS * (0.5 + 0.5 * (i / state.trail.length));
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#3a1a08';
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    // ============================================================
+    //  SECTION 7: KARAKTER-TEGNING
+    // ============================================================
+
+    /* --- Felles hit-state --- */
+    function drawChocolateSplat(cx, cy, r) {
+      // Uregelmessig blob bak hodet
+      ctx.fillStyle = 'rgba(40,12,4,0.88)';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r - 12);
+      ctx.bezierCurveTo(cx + r + 16, cy - r - 2, cx + r + 20, cy + 6, cx + r + 10, cy + r + 14);
+      ctx.bezierCurveTo(cx + r,      cy + r + 22, cx - r,     cy + r + 22, cx - r - 10, cy + r + 14);
+      ctx.bezierCurveTo(cx - r - 20, cy + 6,      cx - r - 16, cy - r - 2, cx, cy - r - 12);
+      ctx.closePath();
+      ctx.fill();
+
+      // Drypp
+      ctx.fillStyle = '#2e0c04';
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.ellipse(cx + i * 13, cy + r + 28, 4, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawHitFace(cx, cy, r) {
+      // Ansikt-sirkel (lys)
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#f0e0c0';
+      ctx.fill();
+      ctx.strokeStyle = '#c0a080';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // X-øyne
+      [[-11, -5], [11, -5]].forEach(([ox, oy]) => {
+        const ex = cx + ox, ey = cy + oy;
+        ctx.strokeStyle = '#3e1608';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(ex-5, ey-5); ctx.lineTo(ex+5, ey+5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ex+5, ey-5); ctx.lineTo(ex-5, ey+5); ctx.stroke();
+      });
+
+      // Sikksakk-munn
+      ctx.strokeStyle = '#3e1608';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, cy + 13);
+      ctx.lineTo(cx - 5,  cy + 17);
+      ctx.lineTo(cx,      cy + 13);
+      ctx.lineTo(cx + 5,  cy + 17);
+      ctx.lineTo(cx + 10, cy + 13);
+      ctx.stroke();
+
+      // Sjokolade-flekker på ansiktet
+      ctx.fillStyle = 'rgba(62,22,8,0.55)';
+      ctx.beginPath(); ctx.ellipse(cx - 8, cy - r + 6, 4, 7, 0.3,  0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx + 9, cy - r + 8, 3, 5, -0.2, 0, Math.PI*2); ctx.fill();
+    }
+
+    /* --- TONALD DRUMP --- */
+    function drawDrump(t) {
+      const x = t.x, y = t.y;
+      const cx = x + 35, headY = y + 48;
+
+      if (t.hitTimer > 0) {
+        drawChocolateSplat(cx, headY, 32);
+        drawHitFace(cx, headY, 32);
+        return;
+      }
+
+      // Drakt (marineblå)
+      ctx.fillStyle = '#1a2848';
+      ctx.beginPath();
+      ctx.roundRect(x + 6, y + 66, 58, 24, [0, 0, 6, 6]);
+      ctx.fill();
+
+      // Skjorte (hvit)
+      ctx.fillStyle = '#eeeef0';
+      ctx.fillRect(cx - 5, y + 66, 10, 20);
+
+      // Slips (rød polygon)
+      ctx.fillStyle = '#cc1111';
+      ctx.beginPath();
+      ctx.moveTo(cx - 5, y + 68);
+      ctx.lineTo(cx + 5, y + 68);
+      ctx.lineTo(cx + 7, y + 84);
+      ctx.lineTo(cx,     y + 90);
+      ctx.lineTo(cx - 7, y + 84);
+      ctx.closePath();
+      ctx.fill();
+      // Slips-knute
+      ctx.fillStyle = '#aa0808';
+      ctx.fillRect(cx - 4, y + 66, 8, 6);
+
+      // Hals
+      ctx.fillStyle = '#e0924c';
+      ctx.fillRect(cx - 7, y + 58, 14, 12);
+
+      // Hode (oransje-tonet)
+      ctx.beginPath();
+      ctx.arc(cx, headY, 31, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8a050';
+      ctx.fill();
+      ctx.strokeStyle = '#c07830';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Tanline (lysere under øynene)
+      ctx.fillStyle = 'rgba(255,200,100,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(cx, headY + 8, 20, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ville gule hår
+      ctx.fillStyle = '#f0c020';
+      // Venstre klump
+      ctx.beginPath();
+      ctx.arc(cx - 20, y + 19, 17, Math.PI, 0);
+      ctx.fill();
+      // Midtre klump (høyere)
+      ctx.beginPath();
+      ctx.arc(cx, y + 13, 22, Math.PI * 1.1, Math.PI * 0.0);
+      ctx.fill();
+      // Høyre komme-over (bezier-sveip mot venstre)
+      ctx.fillStyle = '#f5c800';
+      ctx.beginPath();
+      ctx.moveTo(cx + 28, y + 24);
+      ctx.bezierCurveTo(cx + 32, y + 8,  cx + 6,  y + 4,  cx - 24, y + 24);
+      ctx.bezierCurveTo(cx - 10, y + 14, cx + 16, y + 14, cx + 28, y + 24);
+      ctx.fill();
+
+      // Øyne (knepne)
+      ctx.fillStyle = '#1a0a00';
+      ctx.beginPath(); ctx.ellipse(cx - 11, headY - 5, 5.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx + 11, headY - 5, 5.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
+
+      // Hvit glimmer
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.beginPath(); ctx.arc(cx - 9, headY - 6, 1.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 13, headY - 6, 1.5, 0, Math.PI*2); ctx.fill();
+
+      // Sure bryn (nedover innover)
+      ctx.strokeStyle = '#8a4010';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(cx - 18, headY - 14); ctx.lineTo(cx - 4, headY - 11); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + 4,  headY - 11); ctx.lineTo(cx + 18, headY - 14); ctx.stroke();
+
+      // Sur munn (puckered frown)
+      ctx.strokeStyle = '#7a3010';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(cx, headY + 15, 7, Math.PI * 0.12, Math.PI * 0.88);
+      ctx.stroke();
+
+      // Label
+      drawLabel(cx, y + 94, 'Tonald Drump');
+    }
+
+    /* --- PLADIMIR VUTIN --- */
+    function drawVutin(t) {
+      const x = t.x, y = t.y;
+      const cx = x + 35, headY = y + 44;
+
+      if (t.hitTimer > 0) {
+        drawChocolateSplat(cx, headY, 28);
+        drawHitFace(cx, headY, 28);
+        return;
+      }
+
+      // Drakt (antrasitt)
+      ctx.fillStyle = '#252525';
+      ctx.beginPath();
+      ctx.roundRect(x + 5, y + 62, 60, 28, [0, 0, 6, 6]);
+      ctx.fill();
+
+      // Drakt-revers
+      ctx.fillStyle = '#151515';
+      ctx.beginPath();
+      ctx.moveTo(cx - 6, y + 62); ctx.lineTo(cx - 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + 6, y + 62); ctx.lineTo(cx + 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath();
+      ctx.fill();
+
+      // Hals
+      ctx.fillStyle = '#c0b8a8';
+      ctx.fillRect(cx - 6, y + 56, 12, 10);
+
+      // Hode (grå-blek)
+      ctx.beginPath();
+      ctx.arc(cx, headY, 27, 0, Math.PI * 2);
+      ctx.fillStyle = '#c8bfb0';
+      ctx.fill();
+      ctx.strokeStyle = '#a09088';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Nesten-skallete hår (veldig tynn stripe)
+      ctx.fillStyle = '#909088';
+      ctx.beginPath();
+      ctx.arc(cx, y + 17, 24, Math.PI, 0);
+      ctx.fill();
+      // Re-fyll hode-senter for å vise skallet
+      ctx.fillStyle = '#c8bfb0';
+      ctx.beginPath();
+      ctx.arc(cx, y + 24, 17, Math.PI, 0);
+      ctx.fill();
+
+      // Kalde øyne (smale, tett)
+      ctx.fillStyle = '#282030';
+      ctx.beginPath(); ctx.ellipse(cx - 9, headY - 3, 4.5, 3, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx + 9, headY - 3, 4.5, 3, 0, 0, Math.PI*2); ctx.fill();
+
+      // Isblå glimmer
+      ctx.fillStyle = 'rgba(180,220,255,0.6)';
+      ctx.beginPath(); ctx.arc(cx - 8,  headY - 4, 1.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 10, headY - 4, 1.5, 0, Math.PI*2); ctx.fill();
+
+      // Flat munn (én rett linje)
+      ctx.strokeStyle = '#807060';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, headY + 13);
+      ctx.lineTo(cx + 7, headY + 13);
+      ctx.stroke();
+
+      // Flate bryn (horisontale)
+      ctx.strokeStyle = '#5a5048';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx - 15, headY - 11); ctx.lineTo(cx - 4, headY - 11); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + 4,  headY - 11); ctx.lineTo(cx + 15, headY - 11); ctx.stroke();
+
+      // Label
+      drawLabel(cx, y + 94, 'Pladimir Vutin');
+    }
+
+    /* --- INFLUENSER-BABE --- */
+    function drawInfluenser(t) {
+      const x = t.x, y = t.y;
+      const cx = x + 35, headY = y + 44;
+
+      if (t.hitTimer > 0) {
+        drawChocolateSplat(cx, headY, 30);
+        drawHitFace(cx, headY, 30);
+        return;
+      }
+
+      // Selfie-stikk
+      ctx.strokeStyle = '#aaaaaa';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x + 62, y + 74);
+      ctx.lineTo(x + 86, y + 8);
+      ctx.stroke();
+      // Telefon i enden
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(x + 82, y + 2, 16, 10);
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 82, y + 2, 16, 10);
+      // Kamera-lens
+      ctx.fillStyle = '#3a8aff';
+      ctx.beginPath();
+      ctx.arc(x + 90, y + 7, 2.5, 0, Math.PI*2);
+      ctx.fill();
+
+      // Kropp (rosa topp)
+      ctx.fillStyle = '#f06090';
+      ctx.beginPath();
+      ctx.roundRect(x + 8, y + 64, 54, 26, [4, 4, 6, 6]);
+      ctx.fill();
+
+      // Hals
+      ctx.fillStyle = '#f8d0b0';
+      ctx.fillRect(cx - 7, y + 57, 14, 11);
+
+      // Hår (lilla, store buer) – tegnes FØR hodet
+      ctx.fillStyle = '#9B59F6';
+      // Venstre hårfall
+      ctx.beginPath();
+      ctx.arc(cx - 22, headY + 6, 20, Math.PI * 0.55, Math.PI * 1.85);
+      ctx.fill();
+      // Høyre hårfall
+      ctx.beginPath();
+      ctx.arc(cx + 22, headY + 6, 20, Math.PI * 1.15, Math.PI * 0.45, true);
+      ctx.fill();
+      // Hår på topp
+      ctx.beginPath();
+      ctx.arc(cx, y + 15, 26, Math.PI, 0);
+      ctx.fill();
+
+      // Hode (varm hud) – tegnes oppå håret
+      ctx.beginPath();
+      ctx.arc(cx, headY, 28, 0, Math.PI * 2);
+      ctx.fillStyle = '#f8d0b0';
+      ctx.fill();
+      ctx.strokeStyle = '#e0b898';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Store solbriller (rosa)
+      const gy = headY - 5;
+      // Venstre glass
+      ctx.beginPath();
+      ctx.ellipse(cx - 11, gy, 12, 8.5, -0.08, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,80,160,0.65)';
+      ctx.fill();
+      ctx.strokeStyle = '#cc0066';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      // Høyre glass
+      ctx.beginPath();
+      ctx.ellipse(cx + 11, gy, 12, 8.5, 0.08, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,80,160,0.65)';
+      ctx.fill();
+      ctx.strokeStyle = '#cc0066';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      // Bro mellom glassene
+      ctx.beginPath();
+      ctx.moveTo(cx - 2, gy - 2);
+      ctx.lineTo(cx + 2, gy - 2);
+      ctx.stroke();
+      // Armer
+      ctx.beginPath(); ctx.moveTo(cx - 23, gy); ctx.lineTo(cx - 32, gy - 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + 23, gy); ctx.lineTo(cx + 32, gy - 2); ctx.stroke();
+
+      // Andelår (pout-lepper)
+      ctx.fillStyle = '#e8508a';
+      // Øvre leppe
+      ctx.beginPath();
+      ctx.moveTo(cx - 11, headY + 13);
+      ctx.bezierCurveTo(cx - 7, headY + 7, cx + 7, headY + 7, cx + 11, headY + 13);
+      ctx.bezierCurveTo(cx + 7, headY + 10, cx - 7, headY + 10, cx - 11, headY + 13);
+      ctx.fill();
+      // Nedre leppe (tykkere)
+      ctx.fillStyle = '#d44078';
+      ctx.beginPath();
+      ctx.moveTo(cx - 11, headY + 13);
+      ctx.bezierCurveTo(cx - 9, headY + 23, cx + 9, headY + 23, cx + 11, headY + 13);
+      ctx.bezierCurveTo(cx + 7, headY + 20, cx - 7, headY + 20, cx - 11, headY + 13);
+      ctx.fill();
+
+      // Løftede bryn (en høyere enn den andre = influenser-vibe)
+      ctx.strokeStyle = '#5a3010';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(cx - 11, gy - 12, 9, Math.PI * 1.2, Math.PI * 0.0, true); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + 11, gy - 14, 9, Math.PI * 1.1, Math.PI * 0.0, true); ctx.stroke();
+
+      // Label
+      drawLabel(cx, y + 94, 'Influenser-babe');
+    }
+
+    /* --- Navnelapp under figuren --- */
+    function drawLabel(cx, y, text) {
+      ctx.save();
+      ctx.font = 'bold 9px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(253,233,167,0.85)';
+      ctx.fillText(text, cx, y);
+      ctx.restore();
+    }
+
+    // ============================================================
+    //  SECTION 8: MÅL-DEFINISJON OG FORVALTNING
+    // ============================================================
+
+    const TARGET_DEFS = [
+      { type: 'drump',      points: 100, baseVx: 1.7, yPct: 0.20, drawFn: drawDrump      },
+      { type: 'vutin',      points: 150, baseVx: 2.3, yPct: 0.42, drawFn: drawVutin      },
+      { type: 'influenser', points: 200, baseVx: 2.9, yPct: 0.28, drawFn: drawInfluenser },
+    ];
+
+    function spawnTarget(def) {
+      const side = Math.random() < 0.5 ? -80 : canvas.width + 10;
+      const speedMult = 0.85 + Math.random() * 0.3;
+      const vx = (side < 0 ? 1 : -1) * def.baseVx * speedMult;
+      return {
+        type:     def.type,
+        points:   def.points,
+        drawFn:   def.drawFn,
+        x:        side,
+        y:        canvas.height * def.yPct,
+        vx:       vx,
+        width:    70,
+        height:   90,
+        hitTimer: 0,
+      };
+    }
+
+    function initTargets() {
+      state.targets = TARGET_DEFS.map(def => spawnTarget(def));
+    }
+
+    function updateTargets(dt) {
+      state.targets.forEach((t, i) => {
+        if (t.hitTimer > 0) {
+          t.hitTimer -= dt;
+          if (t.hitTimer <= 0) {
+            const fresh = spawnTarget(TARGET_DEFS[i]);
+            Object.assign(t, fresh);
+          }
+          return;
+        }
+        t.x += t.vx;
+        // Bounce ved kanter
+        if (t.x < -10) {
+          t.x = -10; t.vx = Math.abs(t.vx);
+        } else if (t.x + t.width > canvas.width + 10) {
+          t.x = canvas.width + 10 - t.width; t.vx = -Math.abs(t.vx);
+        }
+      });
+    }
+
+    // ============================================================
+    //  SECTION 9: FYSIKK-MOTOR
+    // ============================================================
+
+    function launchBrownie(dragX, dragY) {
+      const { x: sx, y: sy } = slingshotPos();
+      // Kast-retning = motsatt av drag-retning
+      let dvx = sx - dragX;
+      let dvy = sy - dragY;
+      const mag = Math.hypot(dvx, dvy);
+      if (mag === 0) return;
+      const clampedMag = Math.min(mag, CFG.DRAG_RADIUS);
+      const scale = (clampedMag / CFG.DRAG_RADIUS) * CFG.MAX_POWER;
+      dvx = (dvx / mag) * scale;
+      dvy = (dvy / mag) * scale;
+
+      state.brownie = { x: sx, y: sy, vx: dvx, vy: dvy, active: true };
+      state.trail   = [];
+    }
+
+    function updateBrownie() {
+      const b = state.brownie;
+      if (!b || !b.active) return;
+
+      // Trail
+      state.trail.push({ x: b.x, y: b.y });
+      if (state.trail.length > CFG.TRAIL_LENGTH) state.trail.shift();
+
+      // Gravitasjon
+      b.vy += CFG.GRAVITY;
+      b.x  += b.vx;
+      b.y  += b.vy;
+
+      // Ut av canvas → tilbake til waiting
+      const W = canvas.width, H = canvas.height;
+      if (b.y > H + 60 || b.x < -60 || b.x > W + 60) {
+        b.active      = false;
+        state.phase   = 'waiting';
+        state.trail   = [];
+      }
+    }
+
+    // ============================================================
+    //  SECTION 10: TREFF-DETEKSJON
+    // ============================================================
+
+    function circleHitsAABB(cx, cy, r, rx, ry, rw, rh) {
+      const nearX = Math.max(rx, Math.min(cx, rx + rw));
+      const nearY = Math.max(ry, Math.min(cy, ry + rh));
+      return (cx - nearX) ** 2 + (cy - nearY) ** 2 <= r * r;
+    }
+
+    function checkHits() {
+      const b = state.brownie;
+      if (!b || !b.active) return;
+      state.targets.forEach(t => {
+        if (t.hitTimer > 0) return;
+        if (circleHitsAABB(b.x, b.y, CFG.BROWNIE_RADIUS, t.x, t.y, t.width, t.height)) {
+          t.hitTimer    = CFG.HIT_DISPLAY_MS;
+          state.score  += t.points;
+          b.active      = false;
+          state.phase   = 'waiting';
+          state.trail   = [];
+
+          updateScoreDisplay();
+          showHitMessage(t.x + t.width / 2, t.y - 10);
+
+          // Legg til canvas-flytende treff-tekst
+          const txt = HIT_TEXTS[Math.floor(Math.random() * HIT_TEXTS.length)];
+          state.hitMessages.push({
+            text:    txt,
+            x:       t.x + t.width / 2,
+            y:       t.y,
+            opacity: 1.0,
+            vy:      -1.6,
+          });
+        }
+      });
+    }
+
+    // ============================================================
+    //  SECTION 11: INPUT-HÅNDTERING
+    // ============================================================
+
+    function getCanvasPos(e) {
+      const rect    = canvas.getBoundingClientRect();
+      const scaleX  = canvas.width  / rect.width;
+      const scaleY  = canvas.height / rect.height;
+      const src     = e.touches ? e.touches[0] : e;
+      return {
+        x: (src.clientX - rect.left) * scaleX,
+        y: (src.clientY - rect.top)  * scaleY,
+      };
+    }
+
+    function clampDrag(raw) {
+      const { x: sx, y: sy } = slingshotPos();
+      const dx   = raw.x - sx, dy = raw.y - sy;
+      const dist = Math.hypot(dx, dy);
+      if (dist > CFG.DRAG_RADIUS) {
+        const s = CFG.DRAG_RADIUS / dist;
+        return { x: sx + dx * s, y: sy + dy * s };
+      }
+      return raw;
+    }
+
+    function onDown(e) {
+      if (state.phase !== 'waiting') return;
+      e.preventDefault();
+      state.phase       = 'aiming';
+      state.dragCurrent = clampDrag(getCanvasPos(e));
+    }
+
+    function onMove(e) {
+      if (state.phase !== 'aiming') return;
+      e.preventDefault();
+      state.dragCurrent = clampDrag(getCanvasPos(e));
+    }
+
+    function onUp(e) {
+      if (state.phase !== 'aiming') return;
+      e.preventDefault();
+      const { x: sx, y: sy } = slingshotPos();
+      const dist = Math.hypot(state.dragCurrent.x - sx, state.dragCurrent.y - sy);
+      if (dist >= 12) {
+        launchBrownie(state.dragCurrent.x, state.dragCurrent.y);
+        state.phase = 'flying';
+        if (!state.firstThrow) {
+          state.firstThrow = true;
+          document.getElementById('hint-overlay').style.display = 'none';
+        }
+      } else {
+        state.phase = 'waiting';
+      }
+      state.dragCurrent = null;
+    }
+
+    function wireInput() {
+      canvas.addEventListener('mousedown',  onDown);
+      canvas.addEventListener('mousemove',  onMove);
+      canvas.addEventListener('mouseup',    onUp);
+      canvas.addEventListener('touchstart', onDown, { passive: false });
+      canvas.addEventListener('touchmove',  onMove, { passive: false });
+      canvas.addEventListener('touchend',   onUp,   { passive: false });
+    }
+
+    // ============================================================
+    //  SECTION 12: CANVAS-FLYTENDE MELDINGER
+    // ============================================================
+
+    function drawHitMessages() {
+      state.hitMessages = state.hitMessages.filter(m => m.opacity > 0.02);
+      state.hitMessages.forEach(m => {
+        m.y       += m.vy;
+        m.opacity -= 0.025;
+        ctx.save();
+        ctx.globalAlpha = m.opacity;
+        ctx.font        = 'bold 20px Poppins, sans-serif';
+        ctx.textAlign   = 'center';
+        ctx.fillStyle   = '#FDE9A7';
+        ctx.shadowColor = '#4A2C2A';
+        ctx.shadowBlur  = 5;
+        ctx.fillText(m.text, m.x, m.y);
+        ctx.restore();
+      });
+    }
+
+    // ============================================================
+    //  SECTION 13: SPILLØKKE (requestAnimationFrame)
+    // ============================================================
+
+    let lastTime = 0;
+
+    function gameLoop(ts) {
+      if (state.phase === 'gameover') return;
+
+      const dt = ts - lastTime || 16;
+      lastTime = ts;
+
+      // --- Bakgrunn ---
+      drawBackground();
+
+      // --- Mål ---
+      updateTargets(dt);
+      state.targets.forEach(t => t.drawFn(t));
+
+      // --- Slingshot ---
+      drawSlingshot(state.phase === 'aiming' ? state.dragCurrent : null);
+
+      // --- Brownie i luften ---
+      if (state.phase === 'flying' && state.brownie?.active) {
+        drawTrail();
+        drawBrownie(state.brownie.x, state.brownie.y, 1.0);
+        updateBrownie();
+        checkHits();
+      }
+
+      // --- Flytende treff-tekster ---
+      drawHitMessages();
+
+      state.rafId = requestAnimationFrame(gameLoop);
+    }
+
+    // ============================================================
+    //  SECTION 14: TIMER
+    // ============================================================
+
+    function startTimer() {
+      state.timeLeft = CFG.GAME_DURATION;
+      updateTimerDisplay();
+      clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(() => {
+        state.timeLeft--;
+        updateTimerDisplay();
+        if (state.timeLeft <= 5) {
+          document.getElementById('timer-display').classList.add('urgent');
+        }
+        if (state.timeLeft <= 0) {
+          clearInterval(state.timerInterval);
+          triggerGameOver();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer-val').textContent = Math.max(0, state.timeLeft);
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('score-val').textContent = state.score;
+    }
+
+    // ============================================================
+    //  SECTION 15: SLUTTSKJERM & RABATTKODE
+    // ============================================================
+
+    function triggerGameOver() {
+      state.phase = 'gameover';
+      if (state.rafId) cancelAnimationFrame(state.rafId);
+
+      const endScreen     = document.getElementById('end-screen');
+      const discountBox   = document.getElementById('discount-box');
+      const tryAgainText  = document.getElementById('try-again-text');
+      const endScoreText  = document.getElementById('end-score-text');
+      const endEmoji      = document.getElementById('end-emoji');
+      const endTitle      = document.getElementById('end-title');
+
+      endScoreText.textContent = `Du scoret ${state.score} poeng! 🎯`;
+
+      if (state.score > CFG.SCORE_THRESHOLD) {
+        endEmoji.textContent = '🏆';
+        endTitle.textContent = 'Kritikken er slukket! 🔥';
+        discountBox.classList.remove('hidden');
+        tryAgainText.classList.add('hidden');
+      } else {
+        endEmoji.textContent = '😅';
+        endTitle.textContent = 'Nesten! Prøv litt hardere...';
+        discountBox.classList.add('hidden');
+        tryAgainText.classList.remove('hidden');
+      }
+      endScreen.classList.remove('hidden');
+    }
+
+    function restartGame() {
+      // Nullstill tilstand
+      state.score        = 0;
+      state.timeLeft     = CFG.GAME_DURATION;
+      state.phase        = 'waiting';
+      state.firstThrow   = false;
+      state.brownie      = null;
+      state.trail        = [];
+      state.hitMessages  = [];
+      state.dragCurrent  = null;
+
+      // Nullstill UI
+      document.getElementById('end-screen').classList.add('hidden');
+      document.getElementById('hint-overlay').style.display = '';
+      document.getElementById('timer-display').classList.remove('urgent');
+      updateScoreDisplay();
+      updateTimerDisplay();
+
+      initTargets();
+      startTimer();
+      lastTime = 0;
+      state.rafId = requestAnimationFrame(gameLoop);
+    }
+
+    // ============================================================
+    //  SECTION 16: DOM-TREFF-MELDING (HTML overlay)
+    // ============================================================
+
+    function showHitMessage(x, y) {
+      const txt  = HIT_TEXTS[Math.floor(Math.random() * HIT_TEXTS.length)];
+      const el   = document.getElementById('hit-message');
+      const rect = canvas.getBoundingClientRect();
+      const scX  = rect.width  / canvas.width;
+      const scY  = rect.height / canvas.height;
+
+      el.textContent  = txt;
+      el.style.left   = (x * scX) + 'px';
+      el.style.top    = ((y - 20) * scY) + 'px';
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 850);
+    }
+
+    // ============================================================
+    //  SECTION 17: INITIALISERING
+    // ============================================================
+
+    function init() {
+      resizeCanvas();
+      wireInput();
+
+      window.addEventListener('resize', () => { resizeCanvas(); });
+      window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 200); });
+
+      document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+      initTargets();
+      startTimer();
+      lastTime    = performance.now();
+      state.rafId = requestAnimationFrame(gameLoop);
+    }
+
+    // Start når font og DOM er klar
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(init);
+    } else {
+      document.addEventListener('DOMContentLoaded', init);
+    }
+
+  })(); // IIFE slutt
+  </script>
+</body>
+</html>
