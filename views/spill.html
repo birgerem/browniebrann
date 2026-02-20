@@ -32,7 +32,7 @@
       height: 100%;
     }
 
-    /* --- HUD (score + timer) --- */
+    /* --- HUD (score + timer + ammo) --- */
     #hud {
       position: absolute;
       top: 0; left: 0; right: 0;
@@ -44,17 +44,19 @@
       z-index: 10;
     }
 
-    #score-display, #timer-display {
+    #score-display, #timer-display, #ammo-display {
       font-family: 'Poppins', sans-serif;
       font-weight: 800;
-      font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+      font-size: clamp(0.82rem, 2.2vw, 1.1rem);
       color: #FDE9A7;
       background: rgba(74,44,42,0.82);
-      padding: 7px 16px;
+      padding: 7px 14px;
       border-radius: 100px;
       backdrop-filter: blur(4px);
       letter-spacing: 0.3px;
     }
+
+    #ammo-display { color: #ffcc44; }
 
     #timer-display.urgent { color: #ff6b6b; animation: urgentPulse 0.5s infinite alternate; }
     @keyframes urgentPulse { from { opacity: 1; } to { opacity: 0.6; } }
@@ -161,7 +163,7 @@
       padding: 10px 16px;
       border-radius: 10px;
       border: 2px dashed #FDE9A7;
-      user-select: all; /* enkel kopiering */
+      user-select: all;
     }
 
     #try-again-text {
@@ -176,7 +178,6 @@
 
     #end-card .btn { margin-top: 4px; }
 
-    /* Responsiv: tettere på veldig smale skjermer */
     @media (max-width: 380px) {
       #end-card { gap: 10px; }
       #discount-code { font-size: 1rem; letter-spacing: 0; }
@@ -204,13 +205,13 @@
   <!-- ========================= SPILLOMRÅDE ========================= -->
   <div id="game-wrapper">
 
-    <!-- Canvas: all spill-grafikk tegnes her -->
     <canvas id="game-canvas"></canvas>
 
-    <!-- HUD: score og timer (HTML overlay) -->
+    <!-- HUD: score, ammo og timer -->
     <div id="hud">
       <div id="score-display">🍫 <span id="score-val">0</span> poeng</div>
-      <div id="timer-display">⏱ <span id="timer-val">30</span>s</div>
+      <div id="ammo-display">🍫 ×<span id="ammo-val">6</span></div>
+      <div id="timer-display">⏱ <span id="timer-val">45</span>s</div>
     </div>
 
     <!-- Hint-tekst (skjules etter første kast) -->
@@ -219,20 +220,18 @@
     <!-- Flytende treff-melding -->
     <div id="hit-message"></div>
 
-    <!-- Sluttskjerm (skjult til spillet er ferdig) -->
+    <!-- Sluttskjerm -->
     <div id="end-screen" class="hidden">
       <div id="end-card">
         <div id="end-emoji">🍫</div>
         <h2 id="end-title">Runden er over!</h2>
         <p id="end-score-text"></p>
 
-        <!-- Rabattkode (vises kun ved høy score) -->
         <div id="discount-box" class="hidden">
           <p>Du slukket kritikken! Få 10% rabatt:</p>
           <div id="discount-code">BROWNIEBRANN10 🍫</div>
         </div>
 
-        <!-- Prøv igjen (vises ved lav score) -->
         <p id="try-again-text" class="hidden">Prøv igjen for å vinne rabatt! 🎯</p>
 
         <button id="restart-btn" class="btn btn-primary btn-large">🔁 Spill igjen!</button>
@@ -245,7 +244,7 @@
   <script src="/js/cart.js"></script>
   <script>
   /* ================================================================
-     BROWNIE BRANN – KAST OG TREFF!
+     BROWNIE BRANN – KAST OG TREFF! (Angry Birds-variant)
      Komplett spilllogikk i ren JS + Canvas 2D API
      Ingen eksterne avhengigheter.
      ================================================================ */
@@ -258,16 +257,20 @@
     // ============================================================
 
     const CFG = {
-      GRAVITY:          0.38,   // px/frame² nedover
-      MAX_POWER:        18,     // max startfart i px/frame
-      DRAG_RADIUS:      95,     // maks drag-avstand fra slingshot (px)
-      SLINGSHOT_X_PCT:  0.13,   // slingshot X som andel av canvas-bredde
-      SLINGSHOT_Y_PCT:  0.78,   // slingshot Y som andel av canvas-høyde
-      BROWNIE_RADIUS:   13,     // brownie-radius i px
-      TRAIL_LENGTH:     6,      // antall trail-posisjoner
-      HIT_DISPLAY_MS:   950,    // ms figur viser chocolate-fjes etter treff
-      GAME_DURATION:    30,     // sekunder
-      SCORE_THRESHOLD:  500,    // grense for rabattkode
+      GRAVITY:          0.50,   // økt fra 0.38 → mer tyngdekraft
+      MAX_POWER:        22,     // økt fra 18 → mer kraft
+      DRAG_RADIUS:      100,    // litt mer drag-rom
+      SLINGSHOT_X_PCT:  0.13,
+      SLINGSHOT_Y_PCT:  0.78,
+      BROWNIE_RADIUS:   13,
+      TRAIL_LENGTH:     6,
+      HIT_DISPLAY_MS:   950,
+      GAME_DURATION:    45,     // økt fra 30s
+      SCORE_THRESHOLD:  500,
+      MAX_AMMO:         6,      // Angry Birds-stil: begrenset antall brownies
+      BLOCK_W:          30,     // bredde per blokk
+      BLOCK_H:          24,     // høyde per blokk
+      BLOCK_POINTS:     10,     // poeng per ødelagt blokk
     };
 
     const COLORS = {
@@ -287,23 +290,25 @@
       'Full pott! 🏆',
       'Direkte treff! 💣',
       'Bom! 🎊',
+      'Gjennomskudd! 🔥',
     ];
 
     // ============================================================
     //  SECTION 2: TILSTAND (STATE)
     // ============================================================
 
-    // phase: 'waiting' | 'aiming' | 'flying' | 'gameover'
     const state = {
       phase:         'waiting',
       score:         0,
+      ammo:          CFG.MAX_AMMO,
       timeLeft:      CFG.GAME_DURATION,
       firstThrow:    false,
-      dragCurrent:   null,   // {x, y} clamped canvas-koordinater under drag
-      brownie:       null,   // prosjektil-objekt eller null
-      trail:         [],     // array av {x,y}
-      targets:       [],     // array av mål-objekter
-      hitMessages:   [],     // canvas-flytende tekster
+      dragCurrent:   null,
+      brownie:       null,
+      trail:         [],
+      targets:       [],
+      blocks:        [],      // sjokolade-blokker (tårn)
+      hitMessages:   [],
       timerInterval: null,
       rafId:         null,
     };
@@ -319,12 +324,12 @@
       const wrapper = document.getElementById('game-wrapper');
       canvas.width  = wrapper.clientWidth;
       canvas.height = wrapper.clientHeight;
-      // Re-plasser mål ved resize
       if (state.phase !== 'gameover') {
         state.targets.forEach((t, i) => {
           const def = TARGET_DEFS[i];
           t.y = canvas.height * def.yPct;
         });
+        initBlocks();
       }
     }
 
@@ -334,7 +339,6 @@
 
     function drawBackground() {
       const W = canvas.width, H = canvas.height;
-      // Varm sjokolade-gradient
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0,   '#1e0e0d');
       grad.addColorStop(0.5, '#3a1e1c');
@@ -342,26 +346,17 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      // Subtile horisontale striper (tegneserieaktig)
       ctx.strokeStyle = 'rgba(255,255,255,0.025)';
       ctx.lineWidth = 1;
       for (let y = 0; y < H; y += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
 
-      // Gulv-linje
+      const groundY = H * 0.92;
       ctx.strokeStyle = 'rgba(253,233,167,0.15)';
       ctx.lineWidth = 2;
-      const groundY = H * 0.92;
-      ctx.beginPath();
-      ctx.moveTo(0, groundY);
-      ctx.lineTo(W, groundY);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
 
-      // Gress-hint under gulv
       ctx.fillStyle = 'rgba(60,100,30,0.18)';
       ctx.fillRect(0, groundY, W, H - groundY);
     }
@@ -384,66 +379,31 @@
 
       ctx.lineCap = 'round';
 
-      // Trestokk (stamme)
       ctx.strokeStyle = '#5a3010';
       ctx.lineWidth = 11;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy + 14);
-      ctx.lineTo(sx, sy - 10);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx, sy + 14); ctx.lineTo(sx, sy - 10); ctx.stroke();
 
-      // Venstre arm
       ctx.lineWidth = 9;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy - 10);
-      ctx.lineTo(forkL.x, forkL.y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx, sy - 10); ctx.lineTo(forkL.x, forkL.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx, sy - 10); ctx.lineTo(forkR.x, forkR.y); ctx.stroke();
 
-      // Høyre arm
-      ctx.beginPath();
-      ctx.moveTo(sx, sy - 10);
-      ctx.lineTo(forkR.x, forkR.y);
-      ctx.stroke();
-
-      // Tretre-detalj (lys stripe)
       ctx.strokeStyle = 'rgba(200,160,80,0.3)';
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(sx + 2, sy + 14);
-      ctx.lineTo(sx + 2, sy - 8);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx + 2, sy + 14); ctx.lineTo(sx + 2, sy - 8); ctx.stroke();
 
       if (dragPos) {
-        // Gummi-strikker under aiming
         ctx.strokeStyle = '#c8a060';
         ctx.lineWidth = 3;
         ctx.setLineDash([]);
-
-        ctx.beginPath();
-        ctx.moveTo(forkL.x, forkL.y);
-        ctx.lineTo(dragPos.x, dragPos.y);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(forkR.x, forkR.y);
-        ctx.lineTo(dragPos.x, dragPos.y);
-        ctx.stroke();
-
-        // Brownie i slyngen under drag
+        ctx.beginPath(); ctx.moveTo(forkL.x, forkL.y); ctx.lineTo(dragPos.x, dragPos.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(forkR.x, forkR.y); ctx.lineTo(dragPos.x, dragPos.y); ctx.stroke();
         drawBrownie(dragPos.x, dragPos.y, 1.0);
       } else {
-        // Hvile-strikk mellom gaffel-topper
         ctx.strokeStyle = '#9a7840';
         ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(forkL.x, forkL.y);
-        ctx.lineTo(forkR.x, forkR.y);
-        ctx.stroke();
-
-        // Brownie i hvile (på strikken)
+        ctx.beginPath(); ctx.moveTo(forkL.x, forkL.y); ctx.lineTo(forkR.x, forkR.y); ctx.stroke();
         const midX = (forkL.x + forkR.x) / 2;
-        const midY = forkL.y;
-        drawBrownie(midX, midY, 1.0);
+        drawBrownie(midX, forkL.y, 1.0);
       }
     }
 
@@ -455,12 +415,10 @@
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // Skygge
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur  = 8;
       ctx.shadowOffsetY = 3;
 
-      // Hoved-sirkel (mørk brun)
       ctx.beginPath();
       ctx.arc(x, y, CFG.BROWNIE_RADIUS, 0, Math.PI * 2);
       ctx.fillStyle = '#3a1a08';
@@ -468,14 +426,12 @@
 
       ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-      // Mellomton-ring
       ctx.beginPath();
       ctx.arc(x, y, CFG.BROWNIE_RADIUS - 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#5c2e10';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Swirl-detalj (lys)
       ctx.strokeStyle = 'rgba(255,200,100,0.4)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -484,11 +440,8 @@
       ctx.bezierCurveTo(x + 9, y + 5, x + 4, y + 8, x, y + 6);
       ctx.stroke();
 
-      // Hvit glimmer-prikk
       ctx.fillStyle = 'rgba(255,255,220,0.55)';
-      ctx.beginPath();
-      ctx.arc(x - 4, y - 4, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x - 4, y - 4, 2.5, 0, Math.PI * 2); ctx.fill();
 
       ctx.restore();
     }
@@ -499,10 +452,8 @@
         const r = CFG.BROWNIE_RADIUS * (0.5 + 0.5 * (i / state.trail.length));
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = '#3a1a08';
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#3a1a08'; ctx.fill();
         ctx.restore();
       });
     }
@@ -511,58 +462,39 @@
     //  SECTION 7: KARAKTER-TEGNING
     // ============================================================
 
-    /* --- Felles hit-state --- */
     function drawChocolateSplat(cx, cy, r) {
-      // Uregelmessig blob bak hodet
       ctx.fillStyle = 'rgba(40,12,4,0.88)';
       ctx.beginPath();
       ctx.moveTo(cx, cy - r - 12);
       ctx.bezierCurveTo(cx + r + 16, cy - r - 2, cx + r + 20, cy + 6, cx + r + 10, cy + r + 14);
       ctx.bezierCurveTo(cx + r,      cy + r + 22, cx - r,     cy + r + 22, cx - r - 10, cy + r + 14);
       ctx.bezierCurveTo(cx - r - 20, cy + 6,      cx - r - 16, cy - r - 2, cx, cy - r - 12);
-      ctx.closePath();
-      ctx.fill();
+      ctx.closePath(); ctx.fill();
 
-      // Drypp
       ctx.fillStyle = '#2e0c04';
       for (let i = -1; i <= 1; i++) {
-        ctx.beginPath();
-        ctx.ellipse(cx + i * 13, cy + r + 28, 4, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx + i * 13, cy + r + 28, 4, 10, 0, 0, Math.PI * 2); ctx.fill();
       }
     }
 
     function drawHitFace(cx, cy, r) {
-      // Ansikt-sirkel (lys)
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = '#f0e0c0';
-      ctx.fill();
-      ctx.strokeStyle = '#c0a080';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#f0e0c0'; ctx.fill();
+      ctx.strokeStyle = '#c0a080'; ctx.lineWidth = 1.5; ctx.stroke();
 
-      // X-øyne
       [[-11, -5], [11, -5]].forEach(([ox, oy]) => {
         const ex = cx + ox, ey = cy + oy;
-        ctx.strokeStyle = '#3e1608';
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#3e1608'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(ex-5, ey-5); ctx.lineTo(ex+5, ey+5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(ex+5, ey-5); ctx.lineTo(ex-5, ey+5); ctx.stroke();
       });
 
-      // Sikksakk-munn
-      ctx.strokeStyle = '#3e1608';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#3e1608'; ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(cx - 10, cy + 13);
-      ctx.lineTo(cx - 5,  cy + 17);
-      ctx.lineTo(cx,      cy + 13);
-      ctx.lineTo(cx + 5,  cy + 17);
-      ctx.lineTo(cx + 10, cy + 13);
-      ctx.stroke();
+      ctx.moveTo(cx - 10, cy + 13); ctx.lineTo(cx - 5, cy + 17);
+      ctx.lineTo(cx,      cy + 13); ctx.lineTo(cx + 5, cy + 17);
+      ctx.lineTo(cx + 10, cy + 13); ctx.stroke();
 
-      // Sjokolade-flekker på ansiktet
       ctx.fillStyle = 'rgba(62,22,8,0.55)';
       ctx.beginPath(); ctx.ellipse(cx - 8, cy - r + 6, 4, 7, 0.3,  0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(cx + 9, cy - r + 8, 3, 5, -0.2, 0, Math.PI*2); ctx.fill();
@@ -573,66 +505,31 @@
       const x = t.x, y = t.y;
       const cx = x + 35, headY = y + 48;
 
-      if (t.hitTimer > 0) {
-        drawChocolateSplat(cx, headY, 32);
-        drawHitFace(cx, headY, 32);
-        return;
-      }
+      if (t.hitTimer > 0) { drawChocolateSplat(cx, headY, 32); drawHitFace(cx, headY, 32); return; }
 
-      // Drakt (marineblå)
       ctx.fillStyle = '#1a2848';
-      ctx.beginPath();
-      ctx.roundRect(x + 6, y + 66, 58, 24, [0, 0, 6, 6]);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(x + 6, y + 66, 58, 24, [0, 0, 6, 6]); ctx.fill();
+      ctx.fillStyle = '#eeeef0'; ctx.fillRect(cx - 5, y + 66, 10, 20);
 
-      // Skjorte (hvit)
-      ctx.fillStyle = '#eeeef0';
-      ctx.fillRect(cx - 5, y + 66, 10, 20);
-
-      // Slips (rød polygon)
       ctx.fillStyle = '#cc1111';
       ctx.beginPath();
-      ctx.moveTo(cx - 5, y + 68);
-      ctx.lineTo(cx + 5, y + 68);
-      ctx.lineTo(cx + 7, y + 84);
-      ctx.lineTo(cx,     y + 90);
-      ctx.lineTo(cx - 7, y + 84);
-      ctx.closePath();
-      ctx.fill();
-      // Slips-knute
-      ctx.fillStyle = '#aa0808';
-      ctx.fillRect(cx - 4, y + 66, 8, 6);
+      ctx.moveTo(cx - 5, y + 68); ctx.lineTo(cx + 5, y + 68);
+      ctx.lineTo(cx + 7, y + 84); ctx.lineTo(cx,     y + 90);
+      ctx.lineTo(cx - 7, y + 84); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#aa0808'; ctx.fillRect(cx - 4, y + 66, 8, 6);
 
-      // Hals
-      ctx.fillStyle = '#e0924c';
-      ctx.fillRect(cx - 7, y + 58, 14, 12);
+      ctx.fillStyle = '#e0924c'; ctx.fillRect(cx - 7, y + 58, 14, 12);
 
-      // Hode (oransje-tonet)
-      ctx.beginPath();
-      ctx.arc(cx, headY, 31, 0, Math.PI * 2);
-      ctx.fillStyle = '#e8a050';
-      ctx.fill();
-      ctx.strokeStyle = '#c07830';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, headY, 31, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8a050'; ctx.fill();
+      ctx.strokeStyle = '#c07830'; ctx.lineWidth = 2; ctx.stroke();
 
-      // Tanline (lysere under øynene)
       ctx.fillStyle = 'rgba(255,200,100,0.18)';
-      ctx.beginPath();
-      ctx.ellipse(cx, headY + 8, 20, 14, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx, headY + 8, 20, 14, 0, 0, Math.PI * 2); ctx.fill();
 
-      // Ville gule hår
       ctx.fillStyle = '#f0c020';
-      // Venstre klump
-      ctx.beginPath();
-      ctx.arc(cx - 20, y + 19, 17, Math.PI, 0);
-      ctx.fill();
-      // Midtre klump (høyere)
-      ctx.beginPath();
-      ctx.arc(cx, y + 13, 22, Math.PI * 1.1, Math.PI * 0.0);
-      ctx.fill();
-      // Høyre komme-over (bezier-sveip mot venstre)
+      ctx.beginPath(); ctx.arc(cx - 20, y + 19, 17, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, y + 13, 22, Math.PI * 1.1, Math.PI * 0.0); ctx.fill();
       ctx.fillStyle = '#f5c800';
       ctx.beginPath();
       ctx.moveTo(cx + 28, y + 24);
@@ -640,31 +537,20 @@
       ctx.bezierCurveTo(cx - 10, y + 14, cx + 16, y + 14, cx + 28, y + 24);
       ctx.fill();
 
-      // Øyne (knepne)
       ctx.fillStyle = '#1a0a00';
       ctx.beginPath(); ctx.ellipse(cx - 11, headY - 5, 5.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(cx + 11, headY - 5, 5.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
-
-      // Hvit glimmer
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.beginPath(); ctx.arc(cx - 9, headY - 6, 1.5, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(cx + 13, headY - 6, 1.5, 0, Math.PI*2); ctx.fill();
 
-      // Sure bryn (nedover innover)
-      ctx.strokeStyle = '#8a4010';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#8a4010'; ctx.lineWidth = 3; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(cx - 18, headY - 14); ctx.lineTo(cx - 4, headY - 11); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx + 4,  headY - 11); ctx.lineTo(cx + 18, headY - 14); ctx.stroke();
 
-      // Sur munn (puckered frown)
-      ctx.strokeStyle = '#7a3010';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(cx, headY + 15, 7, Math.PI * 0.12, Math.PI * 0.88);
-      ctx.stroke();
+      ctx.strokeStyle = '#7a3010'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(cx, headY + 15, 7, Math.PI * 0.12, Math.PI * 0.88); ctx.stroke();
 
-      // Label
       drawLabel(cx, y + 94, 'Tonald Drump');
     }
 
@@ -673,76 +559,40 @@
       const x = t.x, y = t.y;
       const cx = x + 35, headY = y + 44;
 
-      if (t.hitTimer > 0) {
-        drawChocolateSplat(cx, headY, 28);
-        drawHitFace(cx, headY, 28);
-        return;
-      }
+      if (t.hitTimer > 0) { drawChocolateSplat(cx, headY, 28); drawHitFace(cx, headY, 28); return; }
 
-      // Drakt (antrasitt)
       ctx.fillStyle = '#252525';
-      ctx.beginPath();
-      ctx.roundRect(x + 5, y + 62, 60, 28, [0, 0, 6, 6]);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(x + 5, y + 62, 60, 28, [0, 0, 6, 6]); ctx.fill();
 
-      // Drakt-revers
       ctx.fillStyle = '#151515';
-      ctx.beginPath();
-      ctx.moveTo(cx - 6, y + 62); ctx.lineTo(cx - 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(cx + 6, y + 62); ctx.lineTo(cx + 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath();
-      ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx - 6, y + 62); ctx.lineTo(cx - 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx + 6, y + 62); ctx.lineTo(cx + 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath(); ctx.fill();
 
-      // Hals
-      ctx.fillStyle = '#c0b8a8';
-      ctx.fillRect(cx - 6, y + 56, 12, 10);
+      ctx.fillStyle = '#c0b8a8'; ctx.fillRect(cx - 6, y + 56, 12, 10);
 
-      // Hode (grå-blek)
-      ctx.beginPath();
-      ctx.arc(cx, headY, 27, 0, Math.PI * 2);
-      ctx.fillStyle = '#c8bfb0';
-      ctx.fill();
-      ctx.strokeStyle = '#a09088';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, headY, 27, 0, Math.PI * 2);
+      ctx.fillStyle = '#c8bfb0'; ctx.fill();
+      ctx.strokeStyle = '#a09088'; ctx.lineWidth = 1.5; ctx.stroke();
 
-      // Nesten-skallete hår (veldig tynn stripe)
       ctx.fillStyle = '#909088';
-      ctx.beginPath();
-      ctx.arc(cx, y + 17, 24, Math.PI, 0);
-      ctx.fill();
-      // Re-fyll hode-senter for å vise skallet
+      ctx.beginPath(); ctx.arc(cx, y + 17, 24, Math.PI, 0); ctx.fill();
       ctx.fillStyle = '#c8bfb0';
-      ctx.beginPath();
-      ctx.arc(cx, y + 24, 17, Math.PI, 0);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, y + 24, 17, Math.PI, 0); ctx.fill();
 
-      // Kalde øyne (smale, tett)
       ctx.fillStyle = '#282030';
       ctx.beginPath(); ctx.ellipse(cx - 9, headY - 3, 4.5, 3, 0, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(cx + 9, headY - 3, 4.5, 3, 0, 0, Math.PI*2); ctx.fill();
-
-      // Isblå glimmer
       ctx.fillStyle = 'rgba(180,220,255,0.6)';
       ctx.beginPath(); ctx.arc(cx - 8,  headY - 4, 1.5, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(cx + 10, headY - 4, 1.5, 0, Math.PI*2); ctx.fill();
 
-      // Flat munn (én rett linje)
-      ctx.strokeStyle = '#807060';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx - 7, headY + 13);
-      ctx.lineTo(cx + 7, headY + 13);
-      ctx.stroke();
+      ctx.strokeStyle = '#807060'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx - 7, headY + 13); ctx.lineTo(cx + 7, headY + 13); ctx.stroke();
 
-      // Flate bryn (horisontale)
-      ctx.strokeStyle = '#5a5048';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#5a5048'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(cx - 15, headY - 11); ctx.lineTo(cx - 4, headY - 11); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx + 4,  headY - 11); ctx.lineTo(cx + 15, headY - 11); ctx.stroke();
 
-      // Label
       drawLabel(cx, y + 94, 'Pladimir Vutin');
     }
 
@@ -751,102 +601,45 @@
       const x = t.x, y = t.y;
       const cx = x + 35, headY = y + 44;
 
-      if (t.hitTimer > 0) {
-        drawChocolateSplat(cx, headY, 30);
-        drawHitFace(cx, headY, 30);
-        return;
-      }
+      if (t.hitTimer > 0) { drawChocolateSplat(cx, headY, 30); drawHitFace(cx, headY, 30); return; }
 
-      // Selfie-stikk
-      ctx.strokeStyle = '#aaaaaa';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(x + 62, y + 74);
-      ctx.lineTo(x + 86, y + 8);
-      ctx.stroke();
-      // Telefon i enden
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(x + 82, y + 2, 16, 10);
-      ctx.strokeStyle = '#444';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x + 82, y + 2, 16, 10);
-      // Kamera-lens
+      ctx.strokeStyle = '#aaaaaa'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x + 62, y + 74); ctx.lineTo(x + 86, y + 8); ctx.stroke();
+      ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x + 82, y + 2, 16, 10);
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1; ctx.strokeRect(x + 82, y + 2, 16, 10);
       ctx.fillStyle = '#3a8aff';
-      ctx.beginPath();
-      ctx.arc(x + 90, y + 7, 2.5, 0, Math.PI*2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x + 90, y + 7, 2.5, 0, Math.PI*2); ctx.fill();
 
-      // Kropp (rosa topp)
       ctx.fillStyle = '#f06090';
-      ctx.beginPath();
-      ctx.roundRect(x + 8, y + 64, 54, 26, [4, 4, 6, 6]);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(x + 8, y + 64, 54, 26, [4, 4, 6, 6]); ctx.fill();
+      ctx.fillStyle = '#f8d0b0'; ctx.fillRect(cx - 7, y + 57, 14, 11);
 
-      // Hals
-      ctx.fillStyle = '#f8d0b0';
-      ctx.fillRect(cx - 7, y + 57, 14, 11);
-
-      // Hår (lilla, store buer) – tegnes FØR hodet
       ctx.fillStyle = '#9B59F6';
-      // Venstre hårfall
-      ctx.beginPath();
-      ctx.arc(cx - 22, headY + 6, 20, Math.PI * 0.55, Math.PI * 1.85);
-      ctx.fill();
-      // Høyre hårfall
-      ctx.beginPath();
-      ctx.arc(cx + 22, headY + 6, 20, Math.PI * 1.15, Math.PI * 0.45, true);
-      ctx.fill();
-      // Hår på topp
-      ctx.beginPath();
-      ctx.arc(cx, y + 15, 26, Math.PI, 0);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 22, headY + 6, 20, Math.PI * 0.55, Math.PI * 1.85); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 22, headY + 6, 20, Math.PI * 1.15, Math.PI * 0.45, true); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, y + 15, 26, Math.PI, 0); ctx.fill();
 
-      // Hode (varm hud) – tegnes oppå håret
-      ctx.beginPath();
-      ctx.arc(cx, headY, 28, 0, Math.PI * 2);
-      ctx.fillStyle = '#f8d0b0';
-      ctx.fill();
-      ctx.strokeStyle = '#e0b898';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, headY, 28, 0, Math.PI * 2);
+      ctx.fillStyle = '#f8d0b0'; ctx.fill();
+      ctx.strokeStyle = '#e0b898'; ctx.lineWidth = 1.5; ctx.stroke();
 
-      // Store solbriller (rosa)
       const gy = headY - 5;
-      // Venstre glass
-      ctx.beginPath();
-      ctx.ellipse(cx - 11, gy, 12, 8.5, -0.08, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,80,160,0.65)';
-      ctx.fill();
-      ctx.strokeStyle = '#cc0066';
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
-      // Høyre glass
-      ctx.beginPath();
-      ctx.ellipse(cx + 11, gy, 12, 8.5, 0.08, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,80,160,0.65)';
-      ctx.fill();
-      ctx.strokeStyle = '#cc0066';
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
-      // Bro mellom glassene
-      ctx.beginPath();
-      ctx.moveTo(cx - 2, gy - 2);
-      ctx.lineTo(cx + 2, gy - 2);
-      ctx.stroke();
-      // Armer
+      ctx.beginPath(); ctx.ellipse(cx - 11, gy, 12, 8.5, -0.08, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,80,160,0.65)'; ctx.fill();
+      ctx.strokeStyle = '#cc0066'; ctx.lineWidth = 2.2; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx + 11, gy, 12, 8.5, 0.08, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,80,160,0.65)'; ctx.fill();
+      ctx.strokeStyle = '#cc0066'; ctx.lineWidth = 2.2; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - 2, gy - 2); ctx.lineTo(cx + 2, gy - 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx - 23, gy); ctx.lineTo(cx - 32, gy - 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx + 23, gy); ctx.lineTo(cx + 32, gy - 2); ctx.stroke();
 
-      // Andelår (pout-lepper)
       ctx.fillStyle = '#e8508a';
-      // Øvre leppe
       ctx.beginPath();
       ctx.moveTo(cx - 11, headY + 13);
       ctx.bezierCurveTo(cx - 7, headY + 7, cx + 7, headY + 7, cx + 11, headY + 13);
       ctx.bezierCurveTo(cx + 7, headY + 10, cx - 7, headY + 10, cx - 11, headY + 13);
       ctx.fill();
-      // Nedre leppe (tykkere)
       ctx.fillStyle = '#d44078';
       ctx.beginPath();
       ctx.moveTo(cx - 11, headY + 13);
@@ -854,18 +647,13 @@
       ctx.bezierCurveTo(cx + 7, headY + 20, cx - 7, headY + 20, cx - 11, headY + 13);
       ctx.fill();
 
-      // Løftede bryn (en høyere enn den andre = influenser-vibe)
-      ctx.strokeStyle = '#5a3010';
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#5a3010'; ctx.lineWidth = 2; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(cx - 11, gy - 12, 9, Math.PI * 1.2, Math.PI * 0.0, true); ctx.stroke();
       ctx.beginPath(); ctx.arc(cx + 11, gy - 14, 9, Math.PI * 1.1, Math.PI * 0.0, true); ctx.stroke();
 
-      // Label
       drawLabel(cx, y + 94, 'Influenser-babe');
     }
 
-    /* --- Navnelapp under figuren --- */
     function drawLabel(cx, y, text) {
       ctx.save();
       ctx.font = 'bold 9px Poppins, sans-serif';
@@ -877,25 +665,30 @@
 
     // ============================================================
     //  SECTION 8: MÅL-DEFINISJON OG FORVALTNING
+    //  Mål beveger seg nå raskere og noen også vertikalt
     // ============================================================
 
     const TARGET_DEFS = [
-      { type: 'drump',      points: 100, baseVx: 1.7, yPct: 0.20, drawFn: drawDrump      },
-      { type: 'vutin',      points: 150, baseVx: 2.3, yPct: 0.42, drawFn: drawVutin      },
-      { type: 'influenser', points: 200, baseVx: 2.9, yPct: 0.28, drawFn: drawInfluenser },
+      { type: 'drump',      points: 100, baseVx: 2.2, yPct: 0.22, vy: 0.8,  yRange: 0.16, drawFn: drawDrump      },
+      { type: 'vutin',      points: 150, baseVx: 2.8, yPct: 0.44, vy: 0,    yRange: 0,    drawFn: drawVutin      },
+      { type: 'influenser', points: 200, baseVx: 3.4, yPct: 0.30, vy: 1.1,  yRange: 0.18, drawFn: drawInfluenser },
     ];
 
     function spawnTarget(def) {
       const side = Math.random() < 0.5 ? -80 : canvas.width + 10;
       const speedMult = 0.85 + Math.random() * 0.3;
       const vx = (side < 0 ? 1 : -1) * def.baseVx * speedMult;
+      const baseY = canvas.height * def.yPct;
       return {
         type:     def.type,
         points:   def.points,
         drawFn:   def.drawFn,
         x:        side,
-        y:        canvas.height * def.yPct,
+        y:        baseY,
+        baseY:    baseY,
+        yRange:   canvas.height * def.yRange,
         vx:       vx,
+        vy:       def.vy,
         width:    70,
         height:   90,
         hitTimer: 0,
@@ -916,23 +709,109 @@
           }
           return;
         }
+        // Horisontal bevegelse
         t.x += t.vx;
-        // Bounce ved kanter
-        if (t.x < -10) {
-          t.x = -10; t.vx = Math.abs(t.vx);
-        } else if (t.x + t.width > canvas.width + 10) {
-          t.x = canvas.width + 10 - t.width; t.vx = -Math.abs(t.vx);
+        if (t.x < -10)                        { t.x = -10;                         t.vx =  Math.abs(t.vx); }
+        else if (t.x + t.width > canvas.width + 10) { t.x = canvas.width + 10 - t.width; t.vx = -Math.abs(t.vx); }
+
+        // Vertikal svinging (for Drump og Influenser)
+        if (t.yRange > 0) {
+          t.y += t.vy;
+          const top = t.baseY - t.yRange;
+          const bot = t.baseY + t.yRange * 0.4;
+          if (t.y < top) { t.y = top; t.vy =  Math.abs(t.vy); }
+          if (t.y > bot) { t.y = bot; t.vy = -Math.abs(t.vy); }
         }
       });
     }
 
     // ============================================================
-    //  SECTION 9: FYSIKK-MOTOR
+    //  SECTION 9: SJOKOLADE-BLOKKER (TÅRN)
+    // ============================================================
+
+    // To tårn-definisjoner – plasseres som prosent av canvas
+    const TOWER_DEFS = [
+      { xPct: 0.44, cols: 2, rows: 4 },  // Tårn 1: 4 rader høyt
+      { xPct: 0.68, cols: 2, rows: 3 },  // Tårn 2: 3 rader høyt
+    ];
+
+    function initBlocks() {
+      state.blocks = [];
+      const groundY = canvas.height * 0.92;
+      TOWER_DEFS.forEach(tower => {
+        const startX = canvas.width * tower.xPct;
+        for (let row = 0; row < tower.rows; row++) {
+          for (let col = 0; col < tower.cols; col++) {
+            state.blocks.push({
+              x:      startX + col * (CFG.BLOCK_W + 3),
+              y:      groundY - (row + 1) * (CFG.BLOCK_H + 2),
+              broken: false,
+            });
+          }
+        }
+      });
+    }
+
+    function drawBlocks() {
+      state.blocks.forEach(bl => {
+        if (bl.broken) {
+          // Ødelagt blokk – tegn som fragmenter
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = '#3a1a08';
+          const hw = CFG.BLOCK_W / 2, hh = CFG.BLOCK_H / 2;
+          ctx.fillRect(bl.x,      bl.y,      hw - 1, hh - 1);
+          ctx.fillRect(bl.x + hw + 1, bl.y,  hw - 2, hh - 1);
+          ctx.fillRect(bl.x,      bl.y + hh + 1, hw - 1, hh - 2);
+          ctx.fillRect(bl.x + hw + 1, bl.y + hh + 1, hw - 2, hh - 2);
+          ctx.restore();
+        } else {
+          // Hel blokk – sjokoladefarge med highlight
+          ctx.fillStyle = '#3d1c0c';
+          ctx.beginPath();
+          ctx.roundRect(bl.x, bl.y, CFG.BLOCK_W, CFG.BLOCK_H, 3);
+          ctx.fill();
+          ctx.strokeStyle = '#6b3510';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(bl.x, bl.y, CFG.BLOCK_W, CFG.BLOCK_H, 3);
+          ctx.stroke();
+          // Highlight
+          ctx.fillStyle = 'rgba(255,200,100,0.12)';
+          ctx.fillRect(bl.x + 3, bl.y + 2, CFG.BLOCK_W - 6, 4);
+        }
+      });
+    }
+
+    function checkBlockHits() {
+      const b = state.brownie;
+      if (!b || !b.active) return;
+      state.blocks.forEach(bl => {
+        if (bl.broken) return;
+        if (circleHitsAABB(b.x, b.y, CFG.BROWNIE_RADIUS, bl.x, bl.y, CFG.BLOCK_W, CFG.BLOCK_H)) {
+          bl.broken = true;
+          state.score += CFG.BLOCK_POINTS;
+          updateScoreDisplay();
+          // Stopp brownien ved blokk-treff
+          b.active    = false;
+          state.phase = 'waiting';
+          state.trail = [];
+          checkAmmo();
+          // Liten poeng-melding
+          state.hitMessages.push({
+            text: '+10 💥', x: bl.x + CFG.BLOCK_W / 2, y: bl.y,
+            opacity: 1.0, vy: -1.4,
+          });
+        }
+      });
+    }
+
+    // ============================================================
+    //  SECTION 10: FYSIKK-MOTOR
     // ============================================================
 
     function launchBrownie(dragX, dragY) {
       const { x: sx, y: sy } = slingshotPos();
-      // Kast-retning = motsatt av drag-retning
       let dvx = sx - dragX;
       let dvy = sy - dragY;
       const mag = Math.hypot(dvx, dvy);
@@ -941,7 +820,6 @@
       const scale = (clampedMag / CFG.DRAG_RADIUS) * CFG.MAX_POWER;
       dvx = (dvx / mag) * scale;
       dvy = (dvy / mag) * scale;
-
       state.brownie = { x: sx, y: sy, vx: dvx, vy: dvy, active: true };
       state.trail   = [];
     }
@@ -950,26 +828,24 @@
       const b = state.brownie;
       if (!b || !b.active) return;
 
-      // Trail
       state.trail.push({ x: b.x, y: b.y });
       if (state.trail.length > CFG.TRAIL_LENGTH) state.trail.shift();
 
-      // Gravitasjon
       b.vy += CFG.GRAVITY;
       b.x  += b.vx;
       b.y  += b.vy;
 
-      // Ut av canvas → tilbake til waiting
       const W = canvas.width, H = canvas.height;
       if (b.y > H + 60 || b.x < -60 || b.x > W + 60) {
-        b.active      = false;
-        state.phase   = 'waiting';
-        state.trail   = [];
+        b.active    = false;
+        state.phase = 'waiting';
+        state.trail = [];
+        checkAmmo();
       }
     }
 
     // ============================================================
-    //  SECTION 10: TREFF-DETEKSJON
+    //  SECTION 11: TREFF-DETEKSJON
     // ============================================================
 
     function circleHitsAABB(cx, cy, r, rx, ry, rw, rh) {
@@ -984,37 +860,49 @@
       state.targets.forEach(t => {
         if (t.hitTimer > 0) return;
         if (circleHitsAABB(b.x, b.y, CFG.BROWNIE_RADIUS, t.x, t.y, t.width, t.height)) {
-          t.hitTimer    = CFG.HIT_DISPLAY_MS;
-          state.score  += t.points;
-          b.active      = false;
-          state.phase   = 'waiting';
-          state.trail   = [];
+          t.hitTimer   = CFG.HIT_DISPLAY_MS;
+          state.score += t.points;
+          b.active     = false;
+          state.phase  = 'waiting';
+          state.trail  = [];
 
           updateScoreDisplay();
           showHitMessage(t.x + t.width / 2, t.y - 10);
+          checkAmmo();
 
-          // Legg til canvas-flytende treff-tekst
           const txt = HIT_TEXTS[Math.floor(Math.random() * HIT_TEXTS.length)];
           state.hitMessages.push({
-            text:    txt,
-            x:       t.x + t.width / 2,
-            y:       t.y,
-            opacity: 1.0,
-            vy:      -1.6,
+            text: txt, x: t.x + t.width / 2, y: t.y,
+            opacity: 1.0, vy: -1.6,
           });
         }
       });
     }
 
     // ============================================================
-    //  SECTION 11: INPUT-HÅNDTERING
+    //  SECTION 12: AMMO-SYSTEM
+    // ============================================================
+
+    function checkAmmo() {
+      if (state.ammo <= 0) {
+        clearInterval(state.timerInterval);
+        setTimeout(triggerGameOver, 600);
+      }
+    }
+
+    function updateAmmoDisplay() {
+      document.getElementById('ammo-val').textContent = Math.max(0, state.ammo);
+    }
+
+    // ============================================================
+    //  SECTION 13: INPUT-HÅNDTERING
     // ============================================================
 
     function getCanvasPos(e) {
-      const rect    = canvas.getBoundingClientRect();
-      const scaleX  = canvas.width  / rect.width;
-      const scaleY  = canvas.height / rect.height;
-      const src     = e.touches ? e.touches[0] : e;
+      const rect   = canvas.getBoundingClientRect();
+      const scaleX = canvas.width  / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const src    = e.touches ? e.touches[0] : e;
       return {
         x: (src.clientX - rect.left) * scaleX,
         y: (src.clientY - rect.top)  * scaleY,
@@ -1023,7 +911,7 @@
 
     function clampDrag(raw) {
       const { x: sx, y: sy } = slingshotPos();
-      const dx   = raw.x - sx, dy = raw.y - sy;
+      const dx = raw.x - sx, dy = raw.y - sy;
       const dist = Math.hypot(dx, dy);
       if (dist > CFG.DRAG_RADIUS) {
         const s = CFG.DRAG_RADIUS / dist;
@@ -1034,6 +922,7 @@
 
     function onDown(e) {
       if (state.phase !== 'waiting') return;
+      if (state.ammo <= 0) return;
       e.preventDefault();
       state.phase       = 'aiming';
       state.dragCurrent = clampDrag(getCanvasPos(e));
@@ -1051,6 +940,9 @@
       const { x: sx, y: sy } = slingshotPos();
       const dist = Math.hypot(state.dragCurrent.x - sx, state.dragCurrent.y - sy);
       if (dist >= 12) {
+        // Trekk fra ammo
+        state.ammo--;
+        updateAmmoDisplay();
         launchBrownie(state.dragCurrent.x, state.dragCurrent.y);
         state.phase = 'flying';
         if (!state.firstThrow) {
@@ -1073,7 +965,7 @@
     }
 
     // ============================================================
-    //  SECTION 12: CANVAS-FLYTENDE MELDINGER
+    //  SECTION 14: CANVAS-FLYTENDE MELDINGER
     // ============================================================
 
     function drawHitMessages() {
@@ -1094,7 +986,7 @@
     }
 
     // ============================================================
-    //  SECTION 13: SPILLØKKE (requestAnimationFrame)
+    //  SECTION 15: SPILLØKKE (requestAnimationFrame)
     // ============================================================
 
     let lastTime = 0;
@@ -1105,32 +997,31 @@
       const dt = ts - lastTime || 16;
       lastTime = ts;
 
-      // --- Bakgrunn ---
       drawBackground();
 
-      // --- Mål ---
+      // Blokker (tårn) – tegnes FØR mål og brownie
+      drawBlocks();
+
       updateTargets(dt);
       state.targets.forEach(t => t.drawFn(t));
 
-      // --- Slingshot ---
       drawSlingshot(state.phase === 'aiming' ? state.dragCurrent : null);
 
-      // --- Brownie i luften ---
       if (state.phase === 'flying' && state.brownie?.active) {
         drawTrail();
         drawBrownie(state.brownie.x, state.brownie.y, 1.0);
         updateBrownie();
         checkHits();
+        checkBlockHits();
       }
 
-      // --- Flytende treff-tekster ---
       drawHitMessages();
 
       state.rafId = requestAnimationFrame(gameLoop);
     }
 
     // ============================================================
-    //  SECTION 14: TIMER
+    //  SECTION 16: TIMER
     // ============================================================
 
     function startTimer() {
@@ -1159,21 +1050,25 @@
     }
 
     // ============================================================
-    //  SECTION 15: SLUTTSKJERM & RABATTKODE
+    //  SECTION 17: SLUTTSKJERM & RABATTKODE
     // ============================================================
 
     function triggerGameOver() {
+      if (state.phase === 'gameover') return; // hindre dobbel-kall
       state.phase = 'gameover';
       if (state.rafId) cancelAnimationFrame(state.rafId);
 
-      const endScreen     = document.getElementById('end-screen');
-      const discountBox   = document.getElementById('discount-box');
-      const tryAgainText  = document.getElementById('try-again-text');
-      const endScoreText  = document.getElementById('end-score-text');
-      const endEmoji      = document.getElementById('end-emoji');
-      const endTitle      = document.getElementById('end-title');
+      const endScreen    = document.getElementById('end-screen');
+      const discountBox  = document.getElementById('discount-box');
+      const tryAgainText = document.getElementById('try-again-text');
+      const endScoreText = document.getElementById('end-score-text');
+      const endEmoji     = document.getElementById('end-emoji');
+      const endTitle     = document.getElementById('end-title');
 
-      endScoreText.textContent = `Du scoret ${state.score} poeng! 🎯`;
+      const reason = state.ammo <= 0 && state.timeLeft > 0
+        ? `Du brukte opp alle browniene! Scoret ${state.score} poeng 🍫`
+        : `Du scoret ${state.score} poeng! 🎯`;
+      endScoreText.textContent = reason;
 
       if (state.score > CFG.SCORE_THRESHOLD) {
         endEmoji.textContent = '🏆';
@@ -1190,8 +1085,8 @@
     }
 
     function restartGame() {
-      // Nullstill tilstand
       state.score        = 0;
+      state.ammo         = CFG.MAX_AMMO;
       state.timeLeft     = CFG.GAME_DURATION;
       state.phase        = 'waiting';
       state.firstThrow   = false;
@@ -1200,21 +1095,22 @@
       state.hitMessages  = [];
       state.dragCurrent  = null;
 
-      // Nullstill UI
       document.getElementById('end-screen').classList.add('hidden');
       document.getElementById('hint-overlay').style.display = '';
       document.getElementById('timer-display').classList.remove('urgent');
       updateScoreDisplay();
+      updateAmmoDisplay();
       updateTimerDisplay();
 
       initTargets();
+      initBlocks();
       startTimer();
-      lastTime = 0;
+      lastTime    = 0;
       state.rafId = requestAnimationFrame(gameLoop);
     }
 
     // ============================================================
-    //  SECTION 16: DOM-TREFF-MELDING (HTML overlay)
+    //  SECTION 18: DOM-TREFF-MELDING (HTML overlay)
     // ============================================================
 
     function showHitMessage(x, y) {
@@ -1223,35 +1119,32 @@
       const rect = canvas.getBoundingClientRect();
       const scX  = rect.width  / canvas.width;
       const scY  = rect.height / canvas.height;
-
-      el.textContent  = txt;
-      el.style.left   = (x * scX) + 'px';
-      el.style.top    = ((y - 20) * scY) + 'px';
+      el.textContent = txt;
+      el.style.left  = (x * scX) + 'px';
+      el.style.top   = ((y - 20) * scY) + 'px';
       el.classList.add('show');
       clearTimeout(el._t);
       el._t = setTimeout(() => el.classList.remove('show'), 850);
     }
 
     // ============================================================
-    //  SECTION 17: INITIALISERING
+    //  SECTION 19: INITIALISERING
     // ============================================================
 
     function init() {
       resizeCanvas();
       wireInput();
-
       window.addEventListener('resize', () => { resizeCanvas(); });
       window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 200); });
-
       document.getElementById('restart-btn').addEventListener('click', restartGame);
 
       initTargets();
+      initBlocks();
       startTimer();
       lastTime    = performance.now();
       state.rafId = requestAnimationFrame(gameLoop);
     }
 
-    // Start når font og DOM er klar
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(init);
     } else {

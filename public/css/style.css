@@ -410,6 +410,40 @@ body {
 .meme-punchline { color: var(--yellow); font-size: 0.8rem; opacity: 0.7; }
 
 /* ==========================================
+   MOBIL SPILL-BANNER (kun på mobil)
+   ========================================== */
+.mobile-game-banner {
+  display: none; /* skjult på desktop */
+}
+@media (max-width: 640px) {
+  .mobile-game-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--choco);
+    color: var(--yellow);
+    padding: 14px 20px;
+    gap: 12px;
+    border-bottom: 3px solid var(--yellow);
+  }
+  .mobile-game-text {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .mobile-game-btn {
+    background: var(--yellow);
+    color: var(--choco);
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 8px 18px;
+    border-radius: 99px;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* ==========================================
    VIDEO SECTION
    ========================================== */
 .video-section {
