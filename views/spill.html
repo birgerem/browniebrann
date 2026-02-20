@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Brownie Brann – Kast og Treff! 🎮</title>
+  <title>Brownie Brann – Forsvar Browniene! 🎮</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -12,18 +12,15 @@
     /* =====================================================
        SPILL-SPESIFIKK CSS
        ===================================================== */
-
-    /* Hindre body-scroll under spill */
     body { overflow: hidden; }
 
-    /* Spillområde fyller resten av viewport under navbar */
     #game-wrapper {
       position: relative;
       width: 100%;
-      height: calc(100dvh - 57px); /* dvh = dynamic viewport height (mobil) */
-      background: #2e1a19;
+      height: calc(100dvh - 57px);
+      background: #0a0508;
       overflow: hidden;
-      touch-action: none; /* hindrer scroll ved touch-drag */
+      touch-action: none;
     }
 
     #game-canvas {
@@ -32,69 +29,68 @@
       height: 100%;
     }
 
-    /* --- HUD (score + timer + ammo) --- */
+    /* --- HUD --- */
     #hud {
       position: absolute;
       top: 0; left: 0; right: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 18px;
+      padding: 10px 14px;
       pointer-events: none;
       z-index: 10;
     }
 
-    #score-display, #timer-display, #ammo-display {
+    #score-display, #wave-display, #lives-display {
       font-family: 'Poppins', sans-serif;
       font-weight: 800;
-      font-size: clamp(0.82rem, 2.2vw, 1.1rem);
+      font-size: clamp(0.75rem, 2vw, 1rem);
       color: #FDE9A7;
-      background: rgba(74,44,42,0.82);
-      padding: 7px 14px;
+      background: rgba(10,5,8,0.85);
+      padding: 6px 12px;
       border-radius: 100px;
       backdrop-filter: blur(4px);
+      border: 1px solid rgba(253,233,167,0.2);
       letter-spacing: 0.3px;
-    }
-
-    #ammo-display { color: #ffcc44; }
-
-    #timer-display.urgent { color: #ff6b6b; animation: urgentPulse 0.5s infinite alternate; }
-    @keyframes urgentPulse { from { opacity: 1; } to { opacity: 0.6; } }
-
-    /* --- Hint-tekst --- */
-    #hint-overlay {
-      position: absolute;
-      bottom: 110px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Poppins', sans-serif;
-      font-weight: 700;
-      font-size: clamp(0.82rem, 2.2vw, 1rem);
-      color: #F7F2E9;
-      background: rgba(74,44,42,0.85);
-      padding: 9px 20px;
-      border-radius: 100px;
-      pointer-events: none;
-      z-index: 10;
       white-space: nowrap;
-      animation: pulse 2.5s infinite;
     }
+    #lives-display { font-size: clamp(0.85rem, 2.2vw, 1.05rem); }
 
     /* --- Treff-melding --- */
     #hit-message {
       position: absolute;
       font-family: 'Poppins', sans-serif;
       font-weight: 900;
-      font-size: clamp(1.3rem, 4vw, 1.8rem);
+      font-size: clamp(1.1rem, 3.5vw, 1.6rem);
       color: #FDE9A7;
-      text-shadow: 2px 3px 0 #4A2C2A, -1px -1px 0 #2e1a19;
+      text-shadow: 2px 3px 0 #0a0508;
       pointer-events: none;
       z-index: 20;
       opacity: 0;
-      transition: opacity 0.12s ease;
+      transition: opacity 0.1s ease;
       transform: translateX(-50%);
     }
     #hit-message.show { opacity: 1; }
+
+    /* --- Hint --- */
+    #hint-overlay {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: clamp(0.78rem, 2vw, 0.95rem);
+      color: #F7F2E9;
+      background: rgba(10,5,8,0.88);
+      padding: 8px 18px;
+      border-radius: 100px;
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+      border: 1px solid rgba(253,233,167,0.25);
+      animation: pulse 2.5s infinite;
+    }
 
     /* --- Sluttskjerm --- */
     #end-screen {
@@ -103,7 +99,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(46,26,25,0.9);
+      background: rgba(10,5,8,0.92);
       backdrop-filter: blur(8px);
       z-index: 50;
     }
@@ -112,14 +108,14 @@
     #end-card {
       background: #F7F2E9;
       border-radius: 20px;
-      padding: clamp(24px, 5vw, 44px) clamp(20px, 4vw, 40px);
+      padding: clamp(22px, 5vw, 40px) clamp(18px, 4vw, 36px);
       text-align: center;
-      max-width: 420px;
+      max-width: 400px;
       width: 90%;
-      box-shadow: 0 8px 50px rgba(0,0,0,0.45);
+      box-shadow: 0 8px 50px rgba(0,0,0,0.6);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       animation: cardPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
     }
     @keyframes cardPop {
@@ -127,66 +123,59 @@
       to   { transform: scale(1);   opacity: 1; }
     }
 
-    #end-emoji { font-size: clamp(2.5rem, 7vw, 3.5rem); }
-
+    #end-emoji { font-size: clamp(2.2rem, 6vw, 3rem); }
     #end-card h2 {
       font-family: 'Poppins', sans-serif;
-      font-size: clamp(1.2rem, 3.5vw, 1.7rem);
+      font-size: clamp(1.1rem, 3vw, 1.55rem);
       font-weight: 900;
       color: #4A2C2A;
       margin: 0;
     }
-
     #end-score-text {
       font-family: 'Poppins', sans-serif;
-      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-size: clamp(0.88rem, 2.2vw, 1rem);
       font-weight: 700;
       color: #4A2C2A;
       margin: 0;
     }
-
     #discount-box {
       background: #4A2C2A;
-      border-radius: 14px;
-      padding: 16px 18px;
+      border-radius: 12px;
+      padding: 14px 16px;
       color: #F7F2E9;
       font-family: 'Poppins', sans-serif;
     }
-    #discount-box p { font-size: 0.88rem; margin: 0 0 10px; }
-
+    #discount-box p { font-size: 0.85rem; margin: 0 0 8px; }
     #discount-code {
-      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-size: clamp(1rem, 2.8vw, 1.3rem);
       font-weight: 900;
       color: #FDE9A7;
       letter-spacing: 1px;
       background: rgba(255,255,255,0.1);
-      padding: 10px 16px;
-      border-radius: 10px;
+      padding: 9px 14px;
+      border-radius: 9px;
       border: 2px dashed #FDE9A7;
       user-select: all;
     }
-
     #try-again-text {
       font-family: 'Poppins', sans-serif;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: #6b4f4d;
       font-weight: 600;
       margin: 0;
     }
-
     .hidden { display: none !important; }
-
     #end-card .btn { margin-top: 4px; }
 
     @media (max-width: 380px) {
-      #end-card { gap: 10px; }
-      #discount-code { font-size: 1rem; letter-spacing: 0; }
+      #end-card { gap: 9px; }
+      #discount-code { font-size: 0.95rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ========================= NAVBAR ========================= -->
+  <!-- NAVBAR -->
   <nav class="navbar">
     <a href="/" class="logo">🍫 BrownieBrann™</a>
     <div class="nav-links">
@@ -202,33 +191,32 @@
     <button class="hamburger" id="hamburger">☰</button>
   </nav>
 
-  <!-- ========================= SPILLOMRÅDE ========================= -->
+  <!-- SPILLOMRÅDE -->
   <div id="game-wrapper">
-
     <canvas id="game-canvas"></canvas>
 
-    <!-- HUD: score, ammo og timer -->
+    <!-- HUD -->
     <div id="hud">
-      <div id="score-display">🍫 <span id="score-val">0</span> poeng</div>
-      <div id="ammo-display">🍫 ×<span id="ammo-val">6</span></div>
-      <div id="timer-display">⏱ <span id="timer-val">45</span>s</div>
+      <div id="score-display">🍫 <span id="score-val">0</span></div>
+      <div id="wave-display">Bølge <span id="wave-val">1</span>/3</div>
+      <div id="lives-display"><span id="lives-val">🍫🍫🍫</span></div>
     </div>
 
-    <!-- Hint-tekst (skjules etter første kast) -->
-    <div id="hint-overlay">🍫 Dra bakover fra slyngen og slipp!</div>
+    <!-- Hint -->
+    <div id="hint-overlay">📱 Dra for å bevege · Trykk for å skyte</div>
 
-    <!-- Flytende treff-melding -->
+    <!-- Treff-melding -->
     <div id="hit-message"></div>
 
     <!-- Sluttskjerm -->
     <div id="end-screen" class="hidden">
       <div id="end-card">
         <div id="end-emoji">🍫</div>
-        <h2 id="end-title">Runden er over!</h2>
+        <h2 id="end-title">Spillet er over!</h2>
         <p id="end-score-text"></p>
 
         <div id="discount-box" class="hidden">
-          <p>Du slukket kritikken! Få 10% rabatt:</p>
+          <p>Du forsvarte browniene! Få 10% rabatt:</p>
           <div id="discount-code">BROWNIEBRANN10 🍫</div>
         </div>
 
@@ -238,17 +226,15 @@
         <a href="/meny" class="btn btn-secondary">🛒 Bestill brownies</a>
       </div>
     </div>
-
   </div>
 
   <script src="/js/cart.js"></script>
   <script>
   /* ================================================================
-     BROWNIE BRANN – KAST OG TREFF! (Angry Birds-variant)
-     Komplett spilllogikk i ren JS + Canvas 2D API
-     Ingen eksterne avhengigheter.
+     BROWNIE BRANN – FORSVAR BROWNIENE!
+     Space Invaders-variant med parodi-karakterer
+     Ren JS + Canvas 2D API – ingen eksterne avhengigheter
      ================================================================ */
-
   (function () {
     'use strict';
 
@@ -257,209 +243,248 @@
     // ============================================================
 
     const CFG = {
-      GRAVITY:          0.50,   // økt fra 0.38 → mer tyngdekraft
-      MAX_POWER:        22,     // økt fra 18 → mer kraft
-      DRAG_RADIUS:      100,    // litt mer drag-rom
-      SLINGSHOT_X_PCT:  0.13,
-      SLINGSHOT_Y_PCT:  0.78,
-      BROWNIE_RADIUS:   13,
-      TRAIL_LENGTH:     6,
-      HIT_DISPLAY_MS:   950,
-      GAME_DURATION:    45,     // økt fra 30s
-      SCORE_THRESHOLD:  500,
-      MAX_AMMO:         6,      // Angry Birds-stil: begrenset antall brownies
-      BLOCK_W:          30,     // bredde per blokk
-      BLOCK_H:          24,     // høyde per blokk
-      BLOCK_POINTS:     10,     // poeng per ødelagt blokk
+      INV_COLS:          5,
+      INV_ROWS:          3,
+      INV_CELL_W:        70,     // bounding-box bredde (matcher draw-funksjonene)
+      INV_CELL_H:        90,     // bounding-box høyde
+      INV_GAP_X:         10,     // horisontal gap mellom celler
+      INV_GAP_Y:         16,     // vertikal gap mellom rader
+      INV_TOP_MARGIN:    72,     // px fra topp av canvas (under HUD)
+      SCORE_THRESHOLD:   500,    // grense for rabattkode
+      STARS:             60,     // antall stjerner i bakgrunnen
     };
 
-    const COLORS = {
-      CHOCO:      '#4A2C2A',
-      CHOCO_D:    '#2e1a19',
-      CHOCO_L:    '#6b3f3c',
-      CREAM:      '#F7F2E9',
-      YELLOW:     '#FDE9A7',
-      ORANGE:     '#e07b54',
+    const MOVE_CFG = {
+      STEP:              8,      // px per tick horisontalt
+      DROP:              24,     // px nedover per retningsskifte
+      BASE_INTERVAL:     700,    // ms ved fullt grid, bølge 1
+      MIN_INTERVAL:      80,     // ms minimum
+      WAVE_MULT:         [1.0, 0.72, 0.50],  // bølge 1/2/3
+    };
+
+    const CANNON_CFG = {
+      HALF_W:            28,     // halvbredde av kanon-base
+      HEIGHT:            44,     // total høyde
+      BOTTOM_MARGIN:     14,     // px fra bunnen av canvas
+      SPEED:             0.006,  // canvas.width * dette = px/frame (desktop)
+    };
+
+    const BARRIER_CFG = {
+      COUNT:             3,
+      PX_W:              5,      // piksler bredt
+      PX_H:              4,      // piksler høyt
+      PX_SIZE:           8,      // canvas px per piksel
+      Y_FROM_BOTTOM:     110,    // px over bunnen av canvas
+    };
+
+    const TOUCH_CFG = {
+      DRAG_THRESHOLD:    6,      // px drag før ansett som drag (ikke tap)
+      SENSITIVITY:       1.3,    // finger-delta multiplier
     };
 
     const HIT_TEXTS = [
-      'Treff! 🎯',
-      'Sjokoladeregn! 🍫',
-      'Pang! 💥',
-      'Rett i fjeset! 😤',
-      'Full pott! 🏆',
-      'Direkte treff! 💣',
-      'Bom! 🎊',
-      'Gjennomskudd! 🔥',
+      'Treff! 🎯', 'Pang! 💥', 'Rett i fjeset! 😤',
+      'Sjokoladeregn! 🍫', 'Full pott! 🏆', 'Knust! 💣',
     ];
 
     // ============================================================
-    //  SECTION 2: TILSTAND (STATE)
+    //  SECTION 2: TILSTAND
     // ============================================================
 
     const state = {
-      phase:         'waiting',
-      score:         0,
-      ammo:          CFG.MAX_AMMO,
-      timeLeft:      CFG.GAME_DURATION,
-      firstThrow:    false,
-      dragCurrent:   null,
-      brownie:       null,
-      trail:         [],
-      targets:       [],
-      blocks:        [],      // sjokolade-blokker (tårn)
-      hitMessages:   [],
-      timerInterval: null,
-      rafId:         null,
+      phase:        'playing',   // 'playing' | 'wave_cleared' | 'gameover'
+      score:        0,
+      wave:         1,
+      lives:        3,
+
+      invaders:     [],
+      grid:         { dir: 1 },  // 1=høyre, -1=venstre
+      moveTimer:    null,
+
+      cannon:       { x: 0, hitTimer: 0, invincible: false },
+
+      playerBullet: null,        // { x, y, vy } eller null
+      bombs:        [],
+      barriers:     [],
+      stars:        [],
+
+      hitMessages:  [],
+      floatMsg:     null,        // bølge-ryddet melding { text, opacity, y }
+
+      keys:         { left: false, right: false },
+      rafId:        null,
     };
 
     // ============================================================
     //  SECTION 3: CANVAS & RESIZE
     // ============================================================
 
-    const canvas  = document.getElementById('game-canvas');
-    const ctx     = canvas.getContext('2d');
+    const canvas = document.getElementById('game-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    function getInvaderScale() {
+      return canvas.width < 420 ? 0.65 : 1.0;
+    }
 
     function resizeCanvas() {
       const wrapper = document.getElementById('game-wrapper');
       canvas.width  = wrapper.clientWidth;
       canvas.height = wrapper.clientHeight;
+      state.cannon.x = canvas.width / 2;
       if (state.phase !== 'gameover') {
-        state.targets.forEach((t, i) => {
-          const def = TARGET_DEFS[i];
-          t.y = canvas.height * def.yPct;
-        });
-        initBlocks();
+        initStars();
+        initBarriers();
+        // Behold alive-status, re-beregn posisjoner
+        const aliveMap = state.invaders.map(i => ({ alive: i.alive, hitTimer: i.hitTimer }));
+        initGrid();
+        if (aliveMap.length === state.invaders.length) {
+          state.invaders.forEach((inv, idx) => {
+            inv.alive    = aliveMap[idx].alive;
+            inv.hitTimer = aliveMap[idx].hitTimer;
+          });
+        }
       }
     }
 
     // ============================================================
-    //  SECTION 4: BAKGRUNN
+    //  SECTION 4: BAKGRUNN (stjernefelt)
     // ============================================================
+
+    function initStars() {
+      state.stars = Array.from({ length: CFG.STARS }, () => ({
+        x:       Math.random() * canvas.width,
+        y:       Math.random() * canvas.height,
+        r:       Math.random() * 1.4 + 0.4,
+        alpha:   0.3 + Math.random() * 0.6,
+        twinkle: Math.random() * Math.PI * 2,
+      }));
+    }
 
     function drawBackground() {
       const W = canvas.width, H = canvas.height;
       const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0,   '#1e0e0d');
-      grad.addColorStop(0.5, '#3a1e1c');
-      grad.addColorStop(1,   '#4A2C2A');
+      grad.addColorStop(0,   '#0a0508');
+      grad.addColorStop(0.5, '#1a0c10');
+      grad.addColorStop(1,   '#2e1a19');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-      ctx.lineWidth = 1;
-      for (let y = 0; y < H; y += 40) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-
-      const groundY = H * 0.92;
-      ctx.strokeStyle = 'rgba(253,233,167,0.15)';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
-
-      ctx.fillStyle = 'rgba(60,100,30,0.18)';
-      ctx.fillRect(0, groundY, W, H - groundY);
-    }
-
-    // ============================================================
-    //  SECTION 5: SLINGSHOT
-    // ============================================================
-
-    function slingshotPos() {
-      return {
-        x: Math.round(canvas.width  * CFG.SLINGSHOT_X_PCT),
-        y: Math.round(canvas.height * CFG.SLINGSHOT_Y_PCT),
-      };
-    }
-
-    function drawSlingshot(dragPos) {
-      const { x: sx, y: sy } = slingshotPos();
-      const forkL = { x: sx - 13, y: sy - 42 };
-      const forkR = { x: sx + 13, y: sy - 42 };
-
-      ctx.lineCap = 'round';
-
-      ctx.strokeStyle = '#5a3010';
-      ctx.lineWidth = 11;
-      ctx.beginPath(); ctx.moveTo(sx, sy + 14); ctx.lineTo(sx, sy - 10); ctx.stroke();
-
-      ctx.lineWidth = 9;
-      ctx.beginPath(); ctx.moveTo(sx, sy - 10); ctx.lineTo(forkL.x, forkL.y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx, sy - 10); ctx.lineTo(forkR.x, forkR.y); ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(200,160,80,0.3)';
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(sx + 2, sy + 14); ctx.lineTo(sx + 2, sy - 8); ctx.stroke();
-
-      if (dragPos) {
-        ctx.strokeStyle = '#c8a060';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([]);
-        ctx.beginPath(); ctx.moveTo(forkL.x, forkL.y); ctx.lineTo(dragPos.x, dragPos.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(forkR.x, forkR.y); ctx.lineTo(dragPos.x, dragPos.y); ctx.stroke();
-        drawBrownie(dragPos.x, dragPos.y, 1.0);
-      } else {
-        ctx.strokeStyle = '#9a7840';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.moveTo(forkL.x, forkL.y); ctx.lineTo(forkR.x, forkR.y); ctx.stroke();
-        const midX = (forkL.x + forkR.x) / 2;
-        drawBrownie(midX, forkL.y, 1.0);
-      }
-    }
-
-    // ============================================================
-    //  SECTION 6: BROWNIE-PROSJEKTIL
-    // ============================================================
-
-    function drawBrownie(x, y, alpha) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur  = 8;
-      ctx.shadowOffsetY = 3;
-
-      ctx.beginPath();
-      ctx.arc(x, y, CFG.BROWNIE_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = '#3a1a08';
-      ctx.fill();
-
-      ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-      ctx.beginPath();
-      ctx.arc(x, y, CFG.BROWNIE_RADIUS - 2, 0, Math.PI * 2);
-      ctx.strokeStyle = '#5c2e10';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(255,200,100,0.4)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(x - 6, y - 3);
-      ctx.bezierCurveTo(x - 1, y - 8, x + 5, y - 5, x + 7, y + 1);
-      ctx.bezierCurveTo(x + 9, y + 5, x + 4, y + 8, x, y + 6);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(255,255,220,0.55)';
-      ctx.beginPath(); ctx.arc(x - 4, y - 4, 2.5, 0, Math.PI * 2); ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawTrail() {
-      state.trail.forEach((pos, i) => {
-        const alpha = ((i + 1) / state.trail.length) * 0.4;
-        const r = CFG.BROWNIE_RADIUS * (0.5 + 0.5 * (i / state.trail.length));
+      const t = performance.now() / 1000;
+      state.stars.forEach(s => {
+        const a = s.alpha * (0.6 + 0.4 * Math.sin(s.twinkle + t * 1.8));
         ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.beginPath(); ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = '#3a1a08'; ctx.fill();
+        ctx.globalAlpha = a;
+        ctx.fillStyle   = '#FDE9A7';
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       });
     }
 
     // ============================================================
+    //  SECTION 5: KANON-TEGNING
+    // ============================================================
+
+    function drawCannon() {
+      const x  = state.cannon.x;
+      const by = canvas.height - CANNON_CFG.BOTTOM_MARGIN;
+
+      // Base-plattform (brownie-blokk)
+      ctx.fillStyle = '#4A2C2A';
+      ctx.beginPath();
+      ctx.roundRect(x - 28, by - 20, 56, 20, [6, 6, 3, 3]);
+      ctx.fill();
+
+      // Highlight på base
+      ctx.fillStyle = 'rgba(253,233,167,0.14)';
+      ctx.fillRect(x - 23, by - 18, 46, 4);
+
+      // Løp (sjokolade-rør)
+      ctx.fillStyle = '#3a1a08';
+      ctx.beginPath();
+      ctx.roundRect(x - 6, by - 44, 12, 28, [5, 5, 2, 2]);
+      ctx.fill();
+      ctx.strokeStyle = '#6b3510';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x - 6, by - 44, 12, 28, [5, 5, 2, 2]);
+      ctx.stroke();
+
+      // Løp-highlight
+      ctx.fillStyle = 'rgba(255,200,100,0.16)';
+      ctx.fillRect(x - 3, by - 42, 4, 22);
+
+      // Sjokolade-chips på base
+      ctx.fillStyle = '#2e1a19';
+      [-12, 0, 12].forEach(ox => {
+        ctx.beginPath();
+        ctx.ellipse(x + ox, by - 10, 3.5, 2.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Treff-flash (rød overlay)
+      if (state.cannon.hitTimer > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.55 * (state.cannon.hitTimer / 600);
+        ctx.fillStyle   = '#ff3333';
+        ctx.beginPath();
+        ctx.roundRect(x - 28, by - 44, 56, 44, 6);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Uovervinnelighets-glimt
+      if (state.cannon.invincible && Math.floor(performance.now() / 120) % 2 === 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle   = '#FDE9A7';
+        ctx.beginPath();
+        ctx.roundRect(x - 28, by - 44, 56, 44, 6);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // ============================================================
+    //  SECTION 6: SPILLERKULE
+    // ============================================================
+
+    function fireCannon() {
+      if (state.playerBullet) return; // kun én om gangen
+      if (state.phase !== 'playing')  return;
+      const by = canvas.height - CANNON_CFG.BOTTOM_MARGIN;
+      state.playerBullet = { x: state.cannon.x, y: by - 44, vy: -14 };
+      // Skjul hint etter første skudd
+      const hint = document.getElementById('hint-overlay');
+      if (hint) hint.style.display = 'none';
+    }
+
+    function drawPlayerBullet() {
+      const b = state.playerBullet;
+      if (!b) return;
+      ctx.save();
+      ctx.shadowColor = '#FDE9A7';
+      ctx.shadowBlur  = 10;
+      ctx.fillStyle   = '#FDE9A7';
+      ctx.beginPath();
+      ctx.roundRect(b.x - 4, b.y - 9, 9, 18, 4);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Indre sjokolade-stripe
+      ctx.fillStyle = '#4A2C2A';
+      ctx.fillRect(b.x - 1, b.y - 6, 3, 12);
+      ctx.restore();
+    }
+
+    function updatePlayerBullet() {
+      const b = state.playerBullet;
+      if (!b) return;
+      b.y += b.vy;
+      if (b.y < -20) { state.playerBullet = null; }
+    }
+
+    // ============================================================
     //  SECTION 7: KARAKTER-TEGNING
+    //  (verbatim fra forrige versjon, med suppress-parameter i drawLabel)
     // ============================================================
 
     function drawChocolateSplat(cx, cy, r) {
@@ -470,7 +495,6 @@
       ctx.bezierCurveTo(cx + r,      cy + r + 22, cx - r,     cy + r + 22, cx - r - 10, cy + r + 14);
       ctx.bezierCurveTo(cx - r - 20, cy + 6,      cx - r - 16, cy - r - 2, cx, cy - r - 12);
       ctx.closePath(); ctx.fill();
-
       ctx.fillStyle = '#2e0c04';
       for (let i = -1; i <= 1; i++) {
         ctx.beginPath(); ctx.ellipse(cx + i * 13, cy + r + 28, 4, 10, 0, 0, Math.PI * 2); ctx.fill();
@@ -481,52 +505,51 @@
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fillStyle = '#f0e0c0'; ctx.fill();
       ctx.strokeStyle = '#c0a080'; ctx.lineWidth = 1.5; ctx.stroke();
-
       [[-11, -5], [11, -5]].forEach(([ox, oy]) => {
         const ex = cx + ox, ey = cy + oy;
         ctx.strokeStyle = '#3e1608'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(ex-5, ey-5); ctx.lineTo(ex+5, ey+5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(ex+5, ey-5); ctx.lineTo(ex-5, ey+5); ctx.stroke();
       });
-
       ctx.strokeStyle = '#3e1608'; ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(cx - 10, cy + 13); ctx.lineTo(cx - 5, cy + 17);
       ctx.lineTo(cx,      cy + 13); ctx.lineTo(cx + 5, cy + 17);
       ctx.lineTo(cx + 10, cy + 13); ctx.stroke();
-
       ctx.fillStyle = 'rgba(62,22,8,0.55)';
       ctx.beginPath(); ctx.ellipse(cx - 8, cy - r + 6, 4, 7, 0.3,  0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(cx + 9, cy - r + 8, 3, 5, -0.2, 0, Math.PI*2); ctx.fill();
     }
 
-    /* --- TONALD DRUMP --- */
+    function drawLabel(cx, y, text, suppress) {
+      if (suppress) return;
+      ctx.save();
+      ctx.font = 'bold 9px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(253,233,167,0.85)';
+      ctx.fillText(text, cx, y);
+      ctx.restore();
+    }
+
     function drawDrump(t) {
       const x = t.x, y = t.y;
       const cx = x + 35, headY = y + 48;
-
       if (t.hitTimer > 0) { drawChocolateSplat(cx, headY, 32); drawHitFace(cx, headY, 32); return; }
-
       ctx.fillStyle = '#1a2848';
       ctx.beginPath(); ctx.roundRect(x + 6, y + 66, 58, 24, [0, 0, 6, 6]); ctx.fill();
       ctx.fillStyle = '#eeeef0'; ctx.fillRect(cx - 5, y + 66, 10, 20);
-
       ctx.fillStyle = '#cc1111';
       ctx.beginPath();
       ctx.moveTo(cx - 5, y + 68); ctx.lineTo(cx + 5, y + 68);
       ctx.lineTo(cx + 7, y + 84); ctx.lineTo(cx,     y + 90);
       ctx.lineTo(cx - 7, y + 84); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#aa0808'; ctx.fillRect(cx - 4, y + 66, 8, 6);
-
       ctx.fillStyle = '#e0924c'; ctx.fillRect(cx - 7, y + 58, 14, 12);
-
       ctx.beginPath(); ctx.arc(cx, headY, 31, 0, Math.PI * 2);
       ctx.fillStyle = '#e8a050'; ctx.fill();
       ctx.strokeStyle = '#c07830'; ctx.lineWidth = 2; ctx.stroke();
-
       ctx.fillStyle = 'rgba(255,200,100,0.18)';
       ctx.beginPath(); ctx.ellipse(cx, headY + 8, 20, 14, 0, 0, Math.PI * 2); ctx.fill();
-
       ctx.fillStyle = '#f0c020';
       ctx.beginPath(); ctx.arc(cx - 20, y + 19, 17, Math.PI, 0); ctx.fill();
       ctx.beginPath(); ctx.arc(cx, y + 13, 22, Math.PI * 1.1, Math.PI * 0.0); ctx.fill();
@@ -536,93 +559,71 @@
       ctx.bezierCurveTo(cx + 32, y + 8,  cx + 6,  y + 4,  cx - 24, y + 24);
       ctx.bezierCurveTo(cx - 10, y + 14, cx + 16, y + 14, cx + 28, y + 24);
       ctx.fill();
-
       ctx.fillStyle = '#1a0a00';
       ctx.beginPath(); ctx.ellipse(cx - 11, headY - 5, 5.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(cx + 11, headY - 5, 5.5, 3.5, 0, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.beginPath(); ctx.arc(cx - 9, headY - 6, 1.5, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(cx + 13, headY - 6, 1.5, 0, Math.PI*2); ctx.fill();
-
       ctx.strokeStyle = '#8a4010'; ctx.lineWidth = 3; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(cx - 18, headY - 14); ctx.lineTo(cx - 4, headY - 11); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx + 4,  headY - 11); ctx.lineTo(cx + 18, headY - 14); ctx.stroke();
-
       ctx.strokeStyle = '#7a3010'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(cx, headY + 15, 7, Math.PI * 0.12, Math.PI * 0.88); ctx.stroke();
-
-      drawLabel(cx, y + 94, 'Tonald Drump');
+      drawLabel(cx, y + 94, 'Tonald Drump', t.noLabel);
     }
 
-    /* --- PLADIMIR VUTIN --- */
     function drawVutin(t) {
       const x = t.x, y = t.y;
       const cx = x + 35, headY = y + 44;
-
       if (t.hitTimer > 0) { drawChocolateSplat(cx, headY, 28); drawHitFace(cx, headY, 28); return; }
-
       ctx.fillStyle = '#252525';
       ctx.beginPath(); ctx.roundRect(x + 5, y + 62, 60, 28, [0, 0, 6, 6]); ctx.fill();
-
       ctx.fillStyle = '#151515';
       ctx.beginPath(); ctx.moveTo(cx - 6, y + 62); ctx.lineTo(cx - 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath(); ctx.fill();
       ctx.beginPath(); ctx.moveTo(cx + 6, y + 62); ctx.lineTo(cx + 16, y + 90); ctx.lineTo(cx, y + 78); ctx.closePath(); ctx.fill();
-
       ctx.fillStyle = '#c0b8a8'; ctx.fillRect(cx - 6, y + 56, 12, 10);
-
       ctx.beginPath(); ctx.arc(cx, headY, 27, 0, Math.PI * 2);
       ctx.fillStyle = '#c8bfb0'; ctx.fill();
       ctx.strokeStyle = '#a09088'; ctx.lineWidth = 1.5; ctx.stroke();
-
       ctx.fillStyle = '#909088';
       ctx.beginPath(); ctx.arc(cx, y + 17, 24, Math.PI, 0); ctx.fill();
       ctx.fillStyle = '#c8bfb0';
       ctx.beginPath(); ctx.arc(cx, y + 24, 17, Math.PI, 0); ctx.fill();
-
       ctx.fillStyle = '#282030';
       ctx.beginPath(); ctx.ellipse(cx - 9, headY - 3, 4.5, 3, 0, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(cx + 9, headY - 3, 4.5, 3, 0, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = 'rgba(180,220,255,0.6)';
       ctx.beginPath(); ctx.arc(cx - 8,  headY - 4, 1.5, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(cx + 10, headY - 4, 1.5, 0, Math.PI*2); ctx.fill();
-
       ctx.strokeStyle = '#807060'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(cx - 7, headY + 13); ctx.lineTo(cx + 7, headY + 13); ctx.stroke();
-
       ctx.strokeStyle = '#5a5048'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(cx - 15, headY - 11); ctx.lineTo(cx - 4, headY - 11); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx + 4,  headY - 11); ctx.lineTo(cx + 15, headY - 11); ctx.stroke();
-
-      drawLabel(cx, y + 94, 'Pladimir Vutin');
+      drawLabel(cx, y + 94, 'Pladimir Vutin', t.noLabel);
     }
 
-    /* --- INFLUENSER-BABE --- */
     function drawInfluenser(t) {
       const x = t.x, y = t.y;
       const cx = x + 35, headY = y + 44;
-
       if (t.hitTimer > 0) { drawChocolateSplat(cx, headY, 30); drawHitFace(cx, headY, 30); return; }
-
       ctx.strokeStyle = '#aaaaaa'; ctx.lineWidth = 3; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(x + 62, y + 74); ctx.lineTo(x + 86, y + 8); ctx.stroke();
       ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x + 82, y + 2, 16, 10);
       ctx.strokeStyle = '#444'; ctx.lineWidth = 1; ctx.strokeRect(x + 82, y + 2, 16, 10);
       ctx.fillStyle = '#3a8aff';
       ctx.beginPath(); ctx.arc(x + 90, y + 7, 2.5, 0, Math.PI*2); ctx.fill();
-
       ctx.fillStyle = '#f06090';
       ctx.beginPath(); ctx.roundRect(x + 8, y + 64, 54, 26, [4, 4, 6, 6]); ctx.fill();
       ctx.fillStyle = '#f8d0b0'; ctx.fillRect(cx - 7, y + 57, 14, 11);
-
       ctx.fillStyle = '#9B59F6';
       ctx.beginPath(); ctx.arc(cx - 22, headY + 6, 20, Math.PI * 0.55, Math.PI * 1.85); ctx.fill();
       ctx.beginPath(); ctx.arc(cx + 22, headY + 6, 20, Math.PI * 1.15, Math.PI * 0.45, true); ctx.fill();
       ctx.beginPath(); ctx.arc(cx, y + 15, 26, Math.PI, 0); ctx.fill();
-
       ctx.beginPath(); ctx.arc(cx, headY, 28, 0, Math.PI * 2);
       ctx.fillStyle = '#f8d0b0'; ctx.fill();
       ctx.strokeStyle = '#e0b898'; ctx.lineWidth = 1.5; ctx.stroke();
-
       const gy = headY - 5;
       ctx.beginPath(); ctx.ellipse(cx - 11, gy, 12, 8.5, -0.08, 0, Math.PI*2);
       ctx.fillStyle = 'rgba(255,80,160,0.65)'; ctx.fill();
@@ -633,7 +634,6 @@
       ctx.beginPath(); ctx.moveTo(cx - 2, gy - 2); ctx.lineTo(cx + 2, gy - 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx - 23, gy); ctx.lineTo(cx - 32, gy - 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx + 23, gy); ctx.lineTo(cx + 32, gy - 2); ctx.stroke();
-
       ctx.fillStyle = '#e8508a';
       ctx.beginPath();
       ctx.moveTo(cx - 11, headY + 13);
@@ -646,472 +646,445 @@
       ctx.bezierCurveTo(cx - 9, headY + 23, cx + 9, headY + 23, cx + 11, headY + 13);
       ctx.bezierCurveTo(cx + 7, headY + 20, cx - 7, headY + 20, cx - 11, headY + 13);
       ctx.fill();
-
       ctx.strokeStyle = '#5a3010'; ctx.lineWidth = 2; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(cx - 11, gy - 12, 9, Math.PI * 1.2, Math.PI * 0.0, true); ctx.stroke();
       ctx.beginPath(); ctx.arc(cx + 11, gy - 14, 9, Math.PI * 1.1, Math.PI * 0.0, true); ctx.stroke();
-
-      drawLabel(cx, y + 94, 'Influenser-babe');
+      drawLabel(cx, y + 94, 'Influenser-babe', t.noLabel);
     }
 
-    function drawLabel(cx, y, text) {
+    // ============================================================
+    //  SECTION 8: INVADER-GRID
+    // ============================================================
+
+    const ROW_DEFS = [
+      { drawFn: drawInfluenser, points: 200 },  // rad 0 (topp) – vanskeligst
+      { drawFn: drawVutin,      points: 150 },  // rad 1 (midten)
+      { drawFn: drawDrump,      points: 100 },  // rad 2 (front) – lettest
+    ];
+
+    function initGrid() {
+      const scale  = getInvaderScale();
+      const cellW  = CFG.INV_CELL_W * scale + CFG.INV_GAP_X;
+      const cellH  = CFG.INV_CELL_H * scale + CFG.INV_GAP_Y;
+      const totalW = CFG.INV_COLS * cellW - CFG.INV_GAP_X;
+      const startX = (canvas.width - totalW) / 2;
+
+      state.invaders = [];
+      state.grid.dir = 1;
+
+      for (let row = 0; row < CFG.INV_ROWS; row++) {
+        for (let col = 0; col < CFG.INV_COLS; col++) {
+          const def = ROW_DEFS[row];
+          state.invaders.push({
+            drawFn:   def.drawFn,
+            points:   def.points,
+            gridRow:  row,
+            gridCol:  col,
+            alive:    true,
+            hitTimer: 0,
+            x:        startX + col * cellW,
+            y:        CFG.INV_TOP_MARGIN + row * cellH,
+            scale:    scale,
+            width:    CFG.INV_CELL_W * scale,
+            height:   CFG.INV_CELL_H * scale,
+          });
+        }
+      }
+    }
+
+    function drawInvader(inv) {
+      if (!inv.alive && inv.hitTimer <= 0) return;
       ctx.save();
-      ctx.font = 'bold 9px Poppins, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(253,233,167,0.85)';
-      ctx.fillText(text, cx, y);
+      ctx.translate(inv.x, inv.y);
+      ctx.scale(inv.scale, inv.scale);
+      inv.drawFn({ x: 0, y: 0, hitTimer: inv.hitTimer, noLabel: true });
       ctx.restore();
     }
 
+    function drawInvaders() {
+      state.invaders.forEach(drawInvader);
+    }
+
+    function updateInvaderTimers(dt) {
+      state.invaders.forEach(inv => {
+        if (inv.hitTimer > 0) {
+          inv.hitTimer = Math.max(0, inv.hitTimer - dt);
+        }
+      });
+    }
+
     // ============================================================
-    //  SECTION 8: MÅL-DEFINISJON OG FORVALTNING
-    //  Mål beveger seg nå raskere og noen også vertikalt
+    //  SECTION 9: BARRIERER
     // ============================================================
 
-    const TARGET_DEFS = [
-      { type: 'drump',      points: 100, baseVx: 2.2, yPct: 0.22, vy: 0.8,  yRange: 0.16, drawFn: drawDrump      },
-      { type: 'vutin',      points: 150, baseVx: 2.8, yPct: 0.44, vy: 0,    yRange: 0,    drawFn: drawVutin      },
-      { type: 'influenser', points: 200, baseVx: 3.4, yPct: 0.30, vy: 1.1,  yRange: 0.18, drawFn: drawInfluenser },
+    // Bunkermønster (1=fylt, 0=hull) – buet utskjæring i bunn-midten
+    const BARRIER_MASK = [
+      [0,1,1,1,0],
+      [1,1,1,1,1],
+      [1,1,1,1,1],
+      [1,0,0,0,1],
     ];
 
-    function spawnTarget(def) {
-      const side = Math.random() < 0.5 ? -80 : canvas.width + 10;
-      const speedMult = 0.85 + Math.random() * 0.3;
-      const vx = (side < 0 ? 1 : -1) * def.baseVx * speedMult;
-      const baseY = canvas.height * def.yPct;
-      return {
-        type:     def.type,
-        points:   def.points,
-        drawFn:   def.drawFn,
-        x:        side,
-        y:        baseY,
-        baseY:    baseY,
-        yRange:   canvas.height * def.yRange,
-        vx:       vx,
-        vy:       def.vy,
-        width:    70,
-        height:   90,
-        hitTimer: 0,
-      };
-    }
+    function initBarriers() {
+      state.barriers = [];
+      const totalPxW = BARRIER_CFG.PX_W * BARRIER_CFG.PX_SIZE;
+      const spacing  = canvas.width / (BARRIER_CFG.COUNT + 1);
+      const baseY    = canvas.height - BARRIER_CFG.Y_FROM_BOTTOM;
 
-    function initTargets() {
-      state.targets = TARGET_DEFS.map(def => spawnTarget(def));
-    }
-
-    function updateTargets(dt) {
-      state.targets.forEach((t, i) => {
-        if (t.hitTimer > 0) {
-          t.hitTimer -= dt;
-          if (t.hitTimer <= 0) {
-            const fresh = spawnTarget(TARGET_DEFS[i]);
-            Object.assign(t, fresh);
-          }
-          return;
-        }
-        // Horisontal bevegelse
-        t.x += t.vx;
-        if (t.x < -10)                        { t.x = -10;                         t.vx =  Math.abs(t.vx); }
-        else if (t.x + t.width > canvas.width + 10) { t.x = canvas.width + 10 - t.width; t.vx = -Math.abs(t.vx); }
-
-        // Vertikal svinging (for Drump og Influenser)
-        if (t.yRange > 0) {
-          t.y += t.vy;
-          const top = t.baseY - t.yRange;
-          const bot = t.baseY + t.yRange * 0.4;
-          if (t.y < top) { t.y = top; t.vy =  Math.abs(t.vy); }
-          if (t.y > bot) { t.y = bot; t.vy = -Math.abs(t.vy); }
-        }
-      });
-    }
-
-    // ============================================================
-    //  SECTION 9: SJOKOLADE-BLOKKER (TÅRN)
-    // ============================================================
-
-    // To tårn-definisjoner – plasseres som prosent av canvas
-    const TOWER_DEFS = [
-      { xPct: 0.44, cols: 2, rows: 4 },  // Tårn 1: 4 rader høyt
-      { xPct: 0.68, cols: 2, rows: 3 },  // Tårn 2: 3 rader høyt
-    ];
-
-    function initBlocks() {
-      state.blocks = [];
-      const groundY = canvas.height * 0.92;
-      TOWER_DEFS.forEach(tower => {
-        const startX = canvas.width * tower.xPct;
-        for (let row = 0; row < tower.rows; row++) {
-          for (let col = 0; col < tower.cols; col++) {
-            state.blocks.push({
-              x:      startX + col * (CFG.BLOCK_W + 3),
-              y:      groundY - (row + 1) * (CFG.BLOCK_H + 2),
-              broken: false,
-            });
+      for (let b = 0; b < BARRIER_CFG.COUNT; b++) {
+        const bx = spacing * (b + 1) - totalPxW / 2;
+        const pixels = [];
+        for (let row = 0; row < BARRIER_CFG.PX_H; row++) {
+          for (let col = 0; col < BARRIER_CFG.PX_W; col++) {
+            if (BARRIER_MASK[row][col]) {
+              pixels.push({
+                x:      bx + col * BARRIER_CFG.PX_SIZE,
+                y:      baseY + row * BARRIER_CFG.PX_SIZE,
+                alive:  true,
+                health: 3,
+              });
+            }
           }
         }
+        state.barriers.push(pixels);
+      }
+    }
+
+    function drawBarriers() {
+      const colors = ['#8b5a20', '#5a3010', '#3a1a08'];
+      state.barriers.forEach(barrier => {
+        barrier.forEach(px => {
+          if (!px.alive) return;
+          ctx.fillStyle = colors[3 - px.health] ?? colors[2];
+          ctx.fillRect(px.x, px.y, BARRIER_CFG.PX_SIZE - 1, BARRIER_CFG.PX_SIZE - 1);
+        });
       });
     }
 
-    function drawBlocks() {
-      state.blocks.forEach(bl => {
-        if (bl.broken) {
-          // Ødelagt blokk – tegn som fragmenter
-          ctx.save();
-          ctx.globalAlpha = 0.55;
-          ctx.fillStyle = '#3a1a08';
-          const hw = CFG.BLOCK_W / 2, hh = CFG.BLOCK_H / 2;
-          ctx.fillRect(bl.x,      bl.y,      hw - 1, hh - 1);
-          ctx.fillRect(bl.x + hw + 1, bl.y,  hw - 2, hh - 1);
-          ctx.fillRect(bl.x,      bl.y + hh + 1, hw - 1, hh - 2);
-          ctx.fillRect(bl.x + hw + 1, bl.y + hh + 1, hw - 2, hh - 2);
-          ctx.restore();
-        } else {
-          // Hel blokk – sjokoladefarge med highlight
-          ctx.fillStyle = '#3d1c0c';
-          ctx.beginPath();
-          ctx.roundRect(bl.x, bl.y, CFG.BLOCK_W, CFG.BLOCK_H, 3);
-          ctx.fill();
-          ctx.strokeStyle = '#6b3510';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.roundRect(bl.x, bl.y, CFG.BLOCK_W, CFG.BLOCK_H, 3);
-          ctx.stroke();
-          // Highlight
-          ctx.fillStyle = 'rgba(255,200,100,0.12)';
-          ctx.fillRect(bl.x + 3, bl.y + 2, CFG.BLOCK_W - 6, 4);
-        }
+    function hitBarrierAt(bx, by) {
+      let wasHit = false;
+      state.barriers.forEach(barrier => {
+        barrier.forEach(px => {
+          if (!px.alive) return;
+          if (bx >= px.x && bx < px.x + BARRIER_CFG.PX_SIZE &&
+              by >= px.y && by < px.y + BARRIER_CFG.PX_SIZE) {
+            px.health--;
+            if (px.health <= 0) px.alive = false;
+            wasHit = true;
+          }
+        });
       });
-    }
-
-    function checkBlockHits() {
-      const b = state.brownie;
-      if (!b || !b.active) return;
-      state.blocks.forEach(bl => {
-        if (bl.broken) return;
-        if (circleHitsAABB(b.x, b.y, CFG.BROWNIE_RADIUS, bl.x, bl.y, CFG.BLOCK_W, CFG.BLOCK_H)) {
-          bl.broken = true;
-          state.score += CFG.BLOCK_POINTS;
-          updateScoreDisplay();
-          // Stopp brownien ved blokk-treff
-          b.active    = false;
-          state.phase = 'waiting';
-          state.trail = [];
-          checkAmmo();
-          // Liten poeng-melding
-          state.hitMessages.push({
-            text: '+10 💥', x: bl.x + CFG.BLOCK_W / 2, y: bl.y,
-            opacity: 1.0, vy: -1.4,
-          });
-        }
-      });
+      return wasHit;
     }
 
     // ============================================================
-    //  SECTION 10: FYSIKK-MOTOR
+    //  SECTION 10: SPILLERFYSIKK
     // ============================================================
 
-    function launchBrownie(dragX, dragY) {
-      const { x: sx, y: sy } = slingshotPos();
-      let dvx = sx - dragX;
-      let dvy = sy - dragY;
-      const mag = Math.hypot(dvx, dvy);
-      if (mag === 0) return;
-      const clampedMag = Math.min(mag, CFG.DRAG_RADIUS);
-      const scale = (clampedMag / CFG.DRAG_RADIUS) * CFG.MAX_POWER;
-      dvx = (dvx / mag) * scale;
-      dvy = (dvy / mag) * scale;
-      state.brownie = { x: sx, y: sy, vx: dvx, vy: dvy, active: true };
-      state.trail   = [];
+    function updateCannonMovement() {
+      const speed = canvas.width * CANNON_CFG.SPEED;
+      if (state.keys.left)  state.cannon.x -= speed;
+      if (state.keys.right) state.cannon.x += speed;
+      clampCannon();
     }
 
-    function updateBrownie() {
-      const b = state.brownie;
-      if (!b || !b.active) return;
+    function clampCannon() {
+      state.cannon.x = Math.max(CANNON_CFG.HALF_W,
+        Math.min(canvas.width - CANNON_CFG.HALF_W, state.cannon.x));
+    }
 
-      state.trail.push({ x: b.x, y: b.y });
-      if (state.trail.length > CFG.TRAIL_LENGTH) state.trail.shift();
-
-      b.vy += CFG.GRAVITY;
-      b.x  += b.vx;
-      b.y  += b.vy;
-
-      const W = canvas.width, H = canvas.height;
-      if (b.y > H + 60 || b.x < -60 || b.x > W + 60) {
-        b.active    = false;
-        state.phase = 'waiting';
-        state.trail = [];
-        checkAmmo();
+    function updateCannonTimers(dt) {
+      if (state.cannon.hitTimer > 0) {
+        state.cannon.hitTimer = Math.max(0, state.cannon.hitTimer - dt);
       }
     }
 
     // ============================================================
-    //  SECTION 11: TREFF-DETEKSJON
+    //  SECTION 11: BOMBEFYSIKK
     // ============================================================
 
-    function circleHitsAABB(cx, cy, r, rx, ry, rw, rh) {
-      const nearX = Math.max(rx, Math.min(cx, rx + rw));
-      const nearY = Math.max(ry, Math.min(cy, ry + rh));
-      return (cx - nearX) ** 2 + (cy - nearY) ** 2 <= r * r;
+    function tryFireBomb() {
+      const alive = state.invaders.filter(i => i.alive).length;
+      if (alive === 0) return;
+      const total      = CFG.INV_COLS * CFG.INV_ROWS;
+      const killRatio  = 1 - (alive / total);
+      const rates      = [0.006, 0.010, 0.016];
+      const baseRate   = rates[state.wave - 1] ?? 0.016;
+      const adjRate    = baseRate * (1 + killRatio * 1.5);
+      const maxBombs   = state.wave + 1;
+
+      if (state.bombs.length >= maxBombs) return;
+      if (Math.random() > adjRate) return;
+
+      // Finn nedre levende invader per kolonne
+      const shooters = [];
+      for (let col = 0; col < CFG.INV_COLS; col++) {
+        const candidates = state.invaders
+          .filter(i => i.alive && i.gridCol === col && i.hitTimer <= 0)
+          .sort((a, b) => b.gridRow - a.gridRow);
+        if (candidates.length) shooters.push(candidates[0]);
+      }
+      if (!shooters.length) return;
+
+      const shooter   = shooters[Math.floor(Math.random() * shooters.length)];
+      const bombSpeed = (5 + (state.wave - 1) * 1.5) * (canvas.height / 700);
+      state.bombs.push({
+        x:  shooter.x + shooter.width / 2,
+        y:  shooter.y + shooter.height,
+        vy: bombSpeed,
+      });
     }
 
-    function checkHits() {
-      const b = state.brownie;
-      if (!b || !b.active) return;
-      state.targets.forEach(t => {
-        if (t.hitTimer > 0) return;
-        if (circleHitsAABB(b.x, b.y, CFG.BROWNIE_RADIUS, t.x, t.y, t.width, t.height)) {
-          t.hitTimer   = CFG.HIT_DISPLAY_MS;
-          state.score += t.points;
-          b.active     = false;
-          state.phase  = 'waiting';
-          state.trail  = [];
+    function drawBombs() {
+      state.bombs.forEach(b => {
+        ctx.save();
+        ctx.fillStyle   = '#2e1a19';
+        ctx.shadowColor = 'rgba(255,80,20,0.5)';
+        ctx.shadowBlur  = 6;
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, 5, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Glans
+        ctx.fillStyle = 'rgba(255,150,50,0.45)';
+        ctx.beginPath();
+        ctx.ellipse(b.x - 1.5, b.y - 2.5, 2, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
 
+    function updateBombs(dt) {
+      state.bombs = state.bombs.filter(bomb => {
+        bomb.y += bomb.vy;
+        // Ut av canvas
+        if (bomb.y > canvas.height + 20) return false;
+        // Treffer barriere
+        if (hitBarrierAt(bomb.x, bomb.y)) return false;
+        return true;
+      });
+    }
+
+    // ============================================================
+    //  SECTION 12: KOLLISJON
+    // ============================================================
+
+    function checkBulletHitsInvader() {
+      const b = state.playerBullet;
+      if (!b) return;
+
+      for (const inv of state.invaders) {
+        if (!inv.alive || inv.hitTimer > 0) continue;
+        // Enkel AABB + margin
+        if (b.x >= inv.x - 4 && b.x <= inv.x + inv.width + 4 &&
+            b.y >= inv.y - 4 && b.y <= inv.y + inv.height) {
+
+          // Treffer barriere på vei dit? Nei – sjekkes separat
+          inv.hitTimer   = 500;
+          inv.alive      = false;
+          state.score   += inv.points;
+          state.playerBullet = null;
           updateScoreDisplay();
-          showHitMessage(t.x + t.width / 2, t.y - 10);
-          checkAmmo();
 
+          // Flytende poengmelding
           const txt = HIT_TEXTS[Math.floor(Math.random() * HIT_TEXTS.length)];
           state.hitMessages.push({
-            text: txt, x: t.x + t.width / 2, y: t.y,
-            opacity: 1.0, vy: -1.6,
+            text: `+${inv.points} ${txt}`,
+            x: inv.x + inv.width / 2,
+            y: inv.y,
+            opacity: 1.0,
+            vy: -1.5,
           });
+          showHitMessage(inv.x + inv.width / 2, inv.y);
+          break;
         }
+      }
+    }
+
+    function checkBulletHitsBarrier() {
+      const b = state.playerBullet;
+      if (!b) return;
+      if (hitBarrierAt(b.x, b.y)) {
+        state.playerBullet = null;
+      }
+    }
+
+    function checkBombHitsPlayer() {
+      if (state.cannon.invincible) return;
+      const cx   = state.cannon.x;
+      const by_  = canvas.height - CANNON_CFG.BOTTOM_MARGIN;
+      const top  = by_ - CANNON_CFG.HEIGHT;
+      const bot  = by_;
+      const left = cx - CANNON_CFG.HALF_W;
+      const rgt  = cx + CANNON_CFG.HALF_W;
+
+      state.bombs = state.bombs.filter(bomb => {
+        if (bomb.x >= left && bomb.x <= rgt && bomb.y >= top && bomb.y <= bot) {
+          state.cannon.hitTimer   = 600;
+          state.cannon.invincible = true;
+          state.lives--;
+          updateLivesDisplay();
+          setTimeout(() => { state.cannon.invincible = false; }, 2000);
+          if (state.lives <= 0) {
+            setTimeout(() => triggerGameOver('dead'), 500);
+          }
+          return false;
+        }
+        return true;
       });
     }
 
     // ============================================================
-    //  SECTION 12: AMMO-SYSTEM
+    //  SECTION 13: GRID-BEVEGELSE
     // ============================================================
 
-    function checkAmmo() {
-      if (state.ammo <= 0) {
-        clearInterval(state.timerInterval);
-        setTimeout(triggerGameOver, 600);
-      }
+    function getMoveInterval() {
+      const alive      = state.invaders.filter(i => i.alive).length;
+      const total      = CFG.INV_COLS * CFG.INV_ROWS;
+      const killRatio  = 1 - (alive / total);
+      const waveMult   = MOVE_CFG.WAVE_MULT[state.wave - 1] ?? 0.50;
+      const interval   = MOVE_CFG.BASE_INTERVAL * waveMult * (1 - killRatio * 0.82);
+      return Math.max(MOVE_CFG.MIN_INTERVAL, interval);
     }
 
-    function updateAmmoDisplay() {
-      document.getElementById('ammo-val').textContent = Math.max(0, state.ammo);
+    function scheduleTick() {
+      clearInterval(state.moveTimer);
+      if (state.phase === 'gameover') return;
+      state.moveTimer = setInterval(tickGrid, getMoveInterval());
     }
 
-    // ============================================================
-    //  SECTION 13: INPUT-HÅNDTERING
-    // ============================================================
+    function tickGrid() {
+      if (state.phase !== 'playing') return;
+      const alive = state.invaders.filter(i => i.alive);
+      if (!alive.length) return;
 
-    function getCanvasPos(e) {
-      const rect   = canvas.getBoundingClientRect();
-      const scaleX = canvas.width  / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const src    = e.touches ? e.touches[0] : e;
-      return {
-        x: (src.clientX - rect.left) * scaleX,
-        y: (src.clientY - rect.top)  * scaleY,
-      };
-    }
+      const step      = MOVE_CFG.STEP;
+      const leftEdge  = Math.min(...alive.map(i => i.x));
+      const rightEdge = Math.max(...alive.map(i => i.x + i.width));
+      const scale     = getInvaderScale();
 
-    function clampDrag(raw) {
-      const { x: sx, y: sy } = slingshotPos();
-      const dx = raw.x - sx, dy = raw.y - sy;
-      const dist = Math.hypot(dx, dy);
-      if (dist > CFG.DRAG_RADIUS) {
-        const s = CFG.DRAG_RADIUS / dist;
-        return { x: sx + dx * s, y: sy + dy * s };
-      }
-      return raw;
-    }
+      let drop = false;
+      if (state.grid.dir === 1  && rightEdge + step > canvas.width - 8)  drop = true;
+      if (state.grid.dir === -1 && leftEdge  - step < 8)                  drop = true;
 
-    function onDown(e) {
-      if (state.phase !== 'waiting') return;
-      if (state.ammo <= 0) return;
-      e.preventDefault();
-      state.phase       = 'aiming';
-      state.dragCurrent = clampDrag(getCanvasPos(e));
-    }
-
-    function onMove(e) {
-      if (state.phase !== 'aiming') return;
-      e.preventDefault();
-      state.dragCurrent = clampDrag(getCanvasPos(e));
-    }
-
-    function onUp(e) {
-      if (state.phase !== 'aiming') return;
-      e.preventDefault();
-      const { x: sx, y: sy } = slingshotPos();
-      const dist = Math.hypot(state.dragCurrent.x - sx, state.dragCurrent.y - sy);
-      if (dist >= 12) {
-        // Trekk fra ammo
-        state.ammo--;
-        updateAmmoDisplay();
-        launchBrownie(state.dragCurrent.x, state.dragCurrent.y);
-        state.phase = 'flying';
-        if (!state.firstThrow) {
-          state.firstThrow = true;
-          document.getElementById('hint-overlay').style.display = 'none';
-        }
+      if (drop) {
+        state.grid.dir *= -1;
+        const dropPx = MOVE_CFG.DROP * scale;
+        state.invaders.forEach(i => { if (i.alive) i.y += dropPx; });
+        checkInvaderReachedBottom();
       } else {
-        state.phase = 'waiting';
+        state.invaders.forEach(i => { if (i.alive) i.x += step * state.grid.dir; });
       }
-      state.dragCurrent = null;
-    }
 
-    function wireInput() {
-      canvas.addEventListener('mousedown',  onDown);
-      canvas.addEventListener('mousemove',  onMove);
-      canvas.addEventListener('mouseup',    onUp);
-      canvas.addEventListener('touchstart', onDown, { passive: false });
-      canvas.addEventListener('touchmove',  onMove, { passive: false });
-      canvas.addEventListener('touchend',   onUp,   { passive: false });
+      // Re-schedule med oppdatert hastighet (en invader kan ha blitt drept)
+      scheduleTick();
     }
 
     // ============================================================
-    //  SECTION 14: CANVAS-FLYTENDE MELDINGER
+    //  SECTION 14: INPUT
+    // ============================================================
+
+    const touchState = { startX: 0, startY: 0, lastX: 0, isDragging: false };
+
+    function wireTouch() {
+      canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const t = e.touches[0];
+        touchState.startX    = t.clientX;
+        touchState.startY    = t.clientY;
+        touchState.lastX     = t.clientX;
+        touchState.isDragging = false;
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const t  = e.touches[0];
+        const dx = t.clientX - touchState.lastX;
+        if (Math.abs(t.clientX - touchState.startX) > TOUCH_CFG.DRAG_THRESHOLD) {
+          touchState.isDragging = true;
+        }
+        if (touchState.isDragging) {
+          const rect   = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          state.cannon.x += dx * scaleX * TOUCH_CFG.SENSITIVITY;
+          clampCannon();
+        }
+        touchState.lastX = t.clientX;
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        const dx = Math.abs(e.changedTouches[0].clientX - touchState.startX);
+        const dy = Math.abs(e.changedTouches[0].clientY - touchState.startY);
+        if (dx < TOUCH_CFG.DRAG_THRESHOLD && dy < 20) {
+          fireCannon();
+        }
+        touchState.isDragging = false;
+      }, { passive: false });
+    }
+
+    function wireKeyboard() {
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft'  || e.key === 'a') { state.keys.left  = true; }
+        if (e.key === 'ArrowRight' || e.key === 'd') { state.keys.right = true; }
+        if (e.key === ' ') { e.preventDefault(); fireCannon(); }
+      });
+      document.addEventListener('keyup', e => {
+        if (e.key === 'ArrowLeft'  || e.key === 'a') state.keys.left  = false;
+        if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = false;
+      });
+    }
+
+    function wireMouse() {
+      canvas.addEventListener('mousemove', e => {
+        const rect   = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        state.cannon.x = (e.clientX - rect.left) * scaleX;
+        clampCannon();
+      });
+      canvas.addEventListener('click', () => fireCannon());
+    }
+
+    // ============================================================
+    //  SECTION 15: FLYTENDE MELDINGER
     // ============================================================
 
     function drawHitMessages() {
       state.hitMessages = state.hitMessages.filter(m => m.opacity > 0.02);
       state.hitMessages.forEach(m => {
         m.y       += m.vy;
-        m.opacity -= 0.025;
+        m.opacity -= 0.022;
         ctx.save();
         ctx.globalAlpha = m.opacity;
-        ctx.font        = 'bold 20px Poppins, sans-serif';
+        ctx.font        = `bold ${Math.round(canvas.width * 0.042)}px Poppins, sans-serif`;
         ctx.textAlign   = 'center';
         ctx.fillStyle   = '#FDE9A7';
-        ctx.shadowColor = '#4A2C2A';
+        ctx.shadowColor = '#0a0508';
         ctx.shadowBlur  = 5;
         ctx.fillText(m.text, m.x, m.y);
         ctx.restore();
       });
     }
 
-    // ============================================================
-    //  SECTION 15: SPILLØKKE (requestAnimationFrame)
-    // ============================================================
-
-    let lastTime = 0;
-
-    function gameLoop(ts) {
-      if (state.phase === 'gameover') return;
-
-      const dt = ts - lastTime || 16;
-      lastTime = ts;
-
-      drawBackground();
-
-      // Blokker (tårn) – tegnes FØR mål og brownie
-      drawBlocks();
-
-      updateTargets(dt);
-      state.targets.forEach(t => t.drawFn(t));
-
-      drawSlingshot(state.phase === 'aiming' ? state.dragCurrent : null);
-
-      if (state.phase === 'flying' && state.brownie?.active) {
-        drawTrail();
-        drawBrownie(state.brownie.x, state.brownie.y, 1.0);
-        updateBrownie();
-        checkHits();
-        checkBlockHits();
-      }
-
-      drawHitMessages();
-
-      state.rafId = requestAnimationFrame(gameLoop);
+    function showFloatingMessage(text) {
+      if (!text) return;
+      state.floatMsg = { text, opacity: 1.0, y: canvas.height * 0.42 };
     }
 
-    // ============================================================
-    //  SECTION 16: TIMER
-    // ============================================================
-
-    function startTimer() {
-      state.timeLeft = CFG.GAME_DURATION;
-      updateTimerDisplay();
-      clearInterval(state.timerInterval);
-      state.timerInterval = setInterval(() => {
-        state.timeLeft--;
-        updateTimerDisplay();
-        if (state.timeLeft <= 5) {
-          document.getElementById('timer-display').classList.add('urgent');
-        }
-        if (state.timeLeft <= 0) {
-          clearInterval(state.timerInterval);
-          triggerGameOver();
-        }
-      }, 1000);
+    function drawFloatingMessage() {
+      const m = state.floatMsg;
+      if (!m || m.opacity <= 0) return;
+      ctx.save();
+      ctx.globalAlpha = m.opacity;
+      ctx.font        = `900 ${Math.round(canvas.width * 0.072)}px Poppins, sans-serif`;
+      ctx.textAlign   = 'center';
+      ctx.fillStyle   = '#FDE9A7';
+      ctx.shadowColor = '#0a0508';
+      ctx.shadowBlur  = 16;
+      ctx.fillText(m.text, canvas.width / 2, m.y);
+      ctx.restore();
+      m.opacity -= 0.010;
     }
-
-    function updateTimerDisplay() {
-      document.getElementById('timer-val').textContent = Math.max(0, state.timeLeft);
-    }
-
-    function updateScoreDisplay() {
-      document.getElementById('score-val').textContent = state.score;
-    }
-
-    // ============================================================
-    //  SECTION 17: SLUTTSKJERM & RABATTKODE
-    // ============================================================
-
-    function triggerGameOver() {
-      if (state.phase === 'gameover') return; // hindre dobbel-kall
-      state.phase = 'gameover';
-      if (state.rafId) cancelAnimationFrame(state.rafId);
-
-      const endScreen    = document.getElementById('end-screen');
-      const discountBox  = document.getElementById('discount-box');
-      const tryAgainText = document.getElementById('try-again-text');
-      const endScoreText = document.getElementById('end-score-text');
-      const endEmoji     = document.getElementById('end-emoji');
-      const endTitle     = document.getElementById('end-title');
-
-      const reason = state.ammo <= 0 && state.timeLeft > 0
-        ? `Du brukte opp alle browniene! Scoret ${state.score} poeng 🍫`
-        : `Du scoret ${state.score} poeng! 🎯`;
-      endScoreText.textContent = reason;
-
-      if (state.score > CFG.SCORE_THRESHOLD) {
-        endEmoji.textContent = '🏆';
-        endTitle.textContent = 'Kritikken er slukket! 🔥';
-        discountBox.classList.remove('hidden');
-        tryAgainText.classList.add('hidden');
-      } else {
-        endEmoji.textContent = '😅';
-        endTitle.textContent = 'Nesten! Prøv litt hardere...';
-        discountBox.classList.add('hidden');
-        tryAgainText.classList.remove('hidden');
-      }
-      endScreen.classList.remove('hidden');
-    }
-
-    function restartGame() {
-      state.score        = 0;
-      state.ammo         = CFG.MAX_AMMO;
-      state.timeLeft     = CFG.GAME_DURATION;
-      state.phase        = 'waiting';
-      state.firstThrow   = false;
-      state.brownie      = null;
-      state.trail        = [];
-      state.hitMessages  = [];
-      state.dragCurrent  = null;
-
-      document.getElementById('end-screen').classList.add('hidden');
-      document.getElementById('hint-overlay').style.display = '';
-      document.getElementById('timer-display').classList.remove('urgent');
-      updateScoreDisplay();
-      updateAmmoDisplay();
-      updateTimerDisplay();
-
-      initTargets();
-      initBlocks();
-      startTimer();
-      lastTime    = 0;
-      state.rafId = requestAnimationFrame(gameLoop);
-    }
-
-    // ============================================================
-    //  SECTION 18: DOM-TREFF-MELDING (HTML overlay)
-    // ============================================================
 
     function showHitMessage(x, y) {
       const txt  = HIT_TEXTS[Math.floor(Math.random() * HIT_TEXTS.length)];
@@ -1121,26 +1094,198 @@
       const scY  = rect.height / canvas.height;
       el.textContent = txt;
       el.style.left  = (x * scX) + 'px';
-      el.style.top   = ((y - 20) * scY) + 'px';
+      el.style.top   = ((y - 16) * scY) + 'px';
       el.classList.add('show');
       clearTimeout(el._t);
-      el._t = setTimeout(() => el.classList.remove('show'), 850);
+      el._t = setTimeout(() => el.classList.remove('show'), 700);
+    }
+
+    // ============================================================
+    //  SECTION 16: SPILLØKKE
+    // ============================================================
+
+    let lastTime = 0;
+
+    function gameLoop(ts) {
+      if (state.phase === 'gameover') return;
+
+      const dt = ts - lastTime || 16;
+      lastTime  = ts;
+
+      // Tegn
+      drawBackground();
+      drawBarriers();
+      drawInvaders();
+      drawPlayerBullet();
+      drawBombs();
+      drawCannon();
+      drawHitMessages();
+      drawFloatingMessage();
+
+      // Oppdater (kun under aktiv spilling)
+      if (state.phase === 'playing') {
+        updateCannonMovement();
+        updatePlayerBullet();
+        updateBombs(dt);
+        updateInvaderTimers(dt);
+        updateCannonTimers(dt);
+        tryFireBomb();
+        checkBulletHitsInvader();
+        checkBulletHitsBarrier();
+        checkBombHitsPlayer();
+        checkWaveCleared();
+        checkInvaderReachedBottom();
+      }
+
+      state.rafId = requestAnimationFrame(gameLoop);
+    }
+
+    // ============================================================
+    //  SECTION 17: BØLGE-HÅNDTERING
+    // ============================================================
+
+    function checkWaveCleared() {
+      const alive = state.invaders.filter(i => i.alive).length;
+      if (alive > 0 || state.phase !== 'playing') return;
+
+      state.phase = 'wave_cleared';
+      clearInterval(state.moveTimer);
+
+      if (state.wave >= 3) {
+        showFloatingMessage('SEIER! 🏆');
+        setTimeout(() => triggerGameOver('victory'), 1800);
+      } else {
+        showFloatingMessage(`BØLGE ${state.wave} RYDDET! 🎉`);
+        setTimeout(() => {
+          state.wave++;
+          state.bombs = [];
+          initGrid();
+          scheduleTick();
+          state.phase = 'playing';
+          updateWaveDisplay();
+        }, 1800);
+      }
+    }
+
+    function checkInvaderReachedBottom() {
+      const cannonTop = canvas.height - CANNON_CFG.BOTTOM_MARGIN - CANNON_CFG.HEIGHT;
+      const invaded   = state.invaders.some(i => i.alive && (i.y + i.height) > cannonTop - 8);
+      if (invaded && state.phase === 'playing') {
+        triggerGameOver('invasion');
+      }
+    }
+
+    // ============================================================
+    //  SECTION 18: SLUTTSKJERM & SCORE
+    // ============================================================
+
+    function triggerGameOver(reason) {
+      if (state.phase === 'gameover') return;
+      state.phase = 'gameover';
+      clearInterval(state.moveTimer);
+      if (state.rafId) cancelAnimationFrame(state.rafId);
+
+      const endScreen    = document.getElementById('end-screen');
+      const discountBox  = document.getElementById('discount-box');
+      const tryAgainText = document.getElementById('try-again-text');
+      const endScoreText = document.getElementById('end-score-text');
+      const endEmoji     = document.getElementById('end-emoji');
+      const endTitle     = document.getElementById('end-title');
+
+      const won = reason === 'victory' || (reason === 'dead' && state.score >= CFG.SCORE_THRESHOLD);
+
+      if (reason === 'victory') {
+        endEmoji.textContent    = '🏆';
+        endTitle.textContent    = 'Du ryddet galaksen! 🚀';
+        endScoreText.textContent = `Alle tre bølgene beseiret! Totalt: ${state.score} poeng 🍫`;
+      } else if (reason === 'dead') {
+        endEmoji.textContent    = '💀';
+        endTitle.textContent    = 'Kanonen ble truffet!';
+        endScoreText.textContent = `Du scoret ${state.score} poeng. ${won ? 'Rabattkode fortjent!' : 'Prøv igjen!'}`;
+      } else {
+        endEmoji.textContent    = '👾';
+        endTitle.textContent    = 'De nådde browniene!';
+        endScoreText.textContent = `Invasjonen lyktes... ${state.score} poeng 😱`;
+      }
+
+      if (won) {
+        discountBox.classList.remove('hidden');
+        tryAgainText.classList.add('hidden');
+      } else {
+        discountBox.classList.add('hidden');
+        tryAgainText.classList.remove('hidden');
+      }
+
+      endScreen.classList.remove('hidden');
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('score-val').textContent = state.score;
+    }
+
+    function updateLivesDisplay() {
+      const filled = '🍫'.repeat(Math.max(0, state.lives));
+      const empty  = '🤍'.repeat(Math.max(0, 3 - state.lives));
+      document.getElementById('lives-val').textContent = filled + empty;
+    }
+
+    function updateWaveDisplay() {
+      document.getElementById('wave-val').textContent = state.wave;
     }
 
     // ============================================================
     //  SECTION 19: INITIALISERING
     // ============================================================
 
+    function restartGame() {
+      state.score        = 0;
+      state.wave         = 1;
+      state.lives        = 3;
+      state.phase        = 'playing';
+      state.playerBullet = null;
+      state.bombs        = [];
+      state.hitMessages  = [];
+      state.floatMsg     = null;
+      state.keys         = { left: false, right: false };
+      state.cannon       = { x: canvas.width / 2, hitTimer: 0, invincible: false };
+
+      document.getElementById('end-screen').classList.add('hidden');
+      document.getElementById('hint-overlay').style.display = '';
+      updateScoreDisplay();
+      updateLivesDisplay();
+      updateWaveDisplay();
+
+      initGrid();
+      initBarriers();
+      scheduleTick();
+      lastTime    = 0;
+      state.rafId = requestAnimationFrame(gameLoop);
+    }
+
     function init() {
       resizeCanvas();
-      wireInput();
+      state.cannon.x = canvas.width / 2;
+
+      wireTouch();
+      wireKeyboard();
+      wireMouse();
+
       window.addEventListener('resize', () => { resizeCanvas(); });
-      window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 200); });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+          resizeCanvas();
+          if (state.phase !== 'gameover') {
+            initStars();
+            initBarriers();
+          }
+        }, 200);
+      });
+
       document.getElementById('restart-btn').addEventListener('click', restartGame);
 
-      initTargets();
-      initBlocks();
-      startTimer();
+      initGrid();
+      initBarriers();
+      scheduleTick();
       lastTime    = performance.now();
       state.rafId = requestAnimationFrame(gameLoop);
     }
