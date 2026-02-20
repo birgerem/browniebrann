@@ -245,8 +245,10 @@ body {
   padding: 20px 16px;
   text-align: center;
   transition: var(--transition);
-  cursor: default;
+  cursor: pointer;
   animation: float 3s ease-in-out infinite;
+  text-decoration: none;
+  display: block;
 }
 
 .brownie-card-mini:nth-child(2) { animation-delay: 0.4s; }
