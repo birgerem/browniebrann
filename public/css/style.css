@@ -410,6 +410,62 @@ body {
 .meme-punchline { color: var(--yellow); font-size: 0.8rem; opacity: 0.7; }
 
 /* ==========================================
+   VIDEO SECTION
+   ========================================== */
+.video-section {
+  background: var(--cream);
+  padding: 80px 24px;
+  text-align: center;
+}
+.video-inner {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.video-badge {
+  background: var(--yellow);
+  color: var(--choco);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 6px 18px;
+  border-radius: 99px;
+  display: inline-block;
+}
+.video-section h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 900;
+  color: var(--choco);
+  margin: 0;
+}
+.video-sub {
+  color: var(--text-light);
+  font-size: 1.05rem;
+  max-width: 480px;
+}
+.video-wrapper {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 9 / 16;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(74,44,42,0.25);
+  margin-top: 0.5rem;
+}
+.video-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+@media (max-width: 640px) {
+  .video-section { padding: 48px 16px; }
+  .video-wrapper { max-width: 280px; }
+}
+
+/* ==========================================
    PAGE HEADER (common)
    ========================================== */
 .page-header {
